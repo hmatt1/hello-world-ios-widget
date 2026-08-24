@@ -11,13 +11,8 @@ Since you are likely developing on **Windows**, the easiest way to install this 
 ### Method 1: Installing from Windows (Sideloadly)
 
 1. **Get the IPA file:**
-   - Create a new tag and release to trigger the GitHub Action. If you have the GitHub CLI (`gh`) installed, you can run:
-     ```bash
-     gh release create v1.0.0 --title "v1.0.0" --generate-notes
-     ```
-     *(Alternatively, create a Release manually from the GitHub website).*
-   - Go to your repository's **Releases** tab.
-   - Download the `HelloWorldApp.ipa` file attached to the latest release (this will appear a few minutes after the action finishes).
+   - Go to this repository's **Releases** tab.
+   - Download the `HelloWorldApp.ipa` file attached to the latest release.
 2. **Install Sideloadly:**
    - Download and install [Sideloadly](https://sideloadly.io/) on your Windows PC.
    - **Important**: Make sure you have iTunes & iCloud installed directly from Apple's website (do *not* use the Microsoft Store versions).
@@ -57,3 +52,17 @@ If you have access to a Mac:
 9. Do the same for the `HelloWorldWidget` target.
 10. Ensure **Developer Mode** is enabled on your iPhone (Settings > Privacy & Security).
 11. Plug in your iPhone, select it as the run destination, and click **Run** (Play button).
+
+## For Developers: Building a Release
+
+Since this repository uses GitHub Actions for CI/CD, generating a new `.ipa` file is completely automated.
+
+To trigger a new build and release, simply create a new tag and push it. If you have the GitHub CLI (`gh`) installed, you can run:
+
+```bash
+gh release create v1.0.0 --title "v1.0.0" --generate-notes
+```
+
+*(Alternatively, you can create a Release manually from the GitHub website).* 
+
+Once the GitHub Action finishes, the new `HelloWorldApp.ipa` will be attached to the release automatically.
