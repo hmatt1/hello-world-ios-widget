@@ -16,6 +16,7 @@ targets:
       CODE_SIGNING_REQUIRED: "NO"
       CODE_SIGNING_ALLOWED: "NO"
     info:
+      path: App/Info.plist
       properties:
         UILaunchScreen: {}
         UIApplicationSceneManifest:
@@ -36,6 +37,7 @@ targets:
       CODE_SIGNING_ALLOWED: "NO"
       SKIP_INSTALL: "YES"
     info:
+      path: Widget/Info.plist
       properties:
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
