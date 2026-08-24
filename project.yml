@@ -1,0 +1,45 @@
+name: HelloWorldApp
+options:
+  bundleIdPrefix: com.example
+  developmentLanguage: en
+targets:
+  HelloWorldApp:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources: [App]
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: com.example.HelloWorldApp
+      ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+      ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+      CODE_SIGN_IDENTITY: "-"
+      CODE_SIGNING_REQUIRED: "NO"
+      CODE_SIGNING_ALLOWED: "NO"
+    info:
+      properties:
+        UILaunchScreen: {}
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+          UISceneConfigurations: {}
+    dependencies:
+      - target: HelloWorldWidget
+  
+  HelloWorldWidget:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources: [Widget]
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: com.example.HelloWorldApp.Widget
+      CODE_SIGN_IDENTITY: "-"
+      CODE_SIGNING_REQUIRED: "NO"
+      CODE_SIGNING_ALLOWED: "NO"
+      SKIP_INSTALL: "YES"
+    info:
+      properties:
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+        CFBundleDisplayName: Hello Widget
+    dependencies:
+      - sdk: WidgetKit.framework
+      - sdk: SwiftUI.framework
