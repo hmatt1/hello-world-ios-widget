@@ -1,0 +1,7 @@
+name: Debug Runner
+on: push
+jobs:
+  debug:
+    runs-on: macos-latest
+    steps:
+      - run: ls -la /Applications | grep Xcode
