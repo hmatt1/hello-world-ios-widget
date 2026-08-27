@@ -6,7 +6,7 @@ targets:
   HelloWorldApp:
     type: application
     platform: iOS
-    deploymentTarget: "18.0"
+    deploymentTarget: "27.0"
     sources: [App]
     settings:
       PRODUCT_BUNDLE_IDENTIFIER: com.hmatt1.helloworldapp
@@ -31,7 +31,7 @@ targets:
   HelloWorldWidget:
     type: app-extension
     platform: iOS
-    deploymentTarget: "18.0"
+    deploymentTarget: "27.0"
     sources: [Widget]
     settings:
       PRODUCT_BUNDLE_IDENTIFIER: com.hmatt1.helloworldapp.Widget
