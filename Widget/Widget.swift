@@ -1,34 +1,45 @@
 import WidgetKit
 import SwiftUI
+import AppIntents
 
-struct Provider: TimelineProvider {
+struct LauncherWidgetConfigurationIntent: WidgetConfigurationIntent {
+    static var title: LocalizedStringResource = "Launcher Widget"
+    static var description: IntentDescription = .init("Widget that runs shortcuts or opens apps")
+
+    @Parameter(title: "First Action")
+    var shortcutOne: SystemShortcut?
+
+    @Parameter(title: "Second Action")
+    var shortcutTwo: SystemShortcut?
+
+    @Parameter(title: "Third Action")
+    var shortcutThree: SystemShortcut?
+}
+
+struct Provider: AppIntentTimelineProvider {
     func placeholder(in context: Context) -> SimpleEntry {
-        SimpleEntry(date: Date())
+        SimpleEntry(date: Date(), configuration: LauncherWidgetConfigurationIntent())
     }
 
-    func getSnapshot(in context: Context, completion: @escaping (SimpleEntry) -> ()) {
-        let entry = SimpleEntry(date: Date())
-        completion(entry)
+    func snapshot(for configuration: LauncherWidgetConfigurationIntent, in context: Context) async -> SimpleEntry {
+        SimpleEntry(date: Date(), configuration: configuration)
     }
-
-    func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
+    
+    func timeline(for configuration: LauncherWidgetConfigurationIntent, in context: Context) async -> Timeline<SimpleEntry> {
         var entries: [SimpleEntry] = []
-
-        // Generate a timeline consisting of five entries an hour apart, starting from the current date.
         let currentDate = Date()
         for hourOffset in 0 ..< 5 {
             let entryDate = Calendar.current.date(byAdding: .hour, value: hourOffset, to: currentDate)!
-            let entry = SimpleEntry(date: entryDate)
+            let entry = SimpleEntry(date: entryDate, configuration: configuration)
             entries.append(entry)
         }
-
-        let timeline = Timeline(entries: entries, policy: .atEnd)
-        completion(timeline)
+        return Timeline(entries: entries, policy: .atEnd)
     }
 }
 
 struct SimpleEntry: TimelineEntry {
     let date: Date
+    let configuration: LauncherWidgetConfigurationIntent
 }
 
 struct HelloWorldWidgetEntryView : View {
@@ -39,28 +50,60 @@ struct HelloWorldWidgetEntryView : View {
     var body: some View {
         if family == .systemSmall {
             VStack(spacing: 8) {
-                Link(destination: URL(string: "googlegmail://")!) {
-                    Text("Gmail")
+                if let shortcut = entry.configuration.shortcutOne {
+                    Button(intent: RunSystemShortcutIntent(shortcut: shortcut)) {
+                        Text(shortcut.displayRepresentation.title)
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .background(Color(white: 0.2))
+                            .cornerRadius(8)
+                    }
+                    .buttonStyle(.plain)
+                } else {
+                    Text("Unconfigured")
                         .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(Color(white: 0.2))
+                        .background(Color.gray)
                         .cornerRadius(8)
                 }
-                Link(destination: URL(string: "x-web-search://?")!) {
-                    Text("Safari")
+                
+                if let shortcut = entry.configuration.shortcutTwo {
+                    Button(intent: RunSystemShortcutIntent(shortcut: shortcut)) {
+                        Text(shortcut.displayRepresentation.title)
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .background(Color(white: 0.2))
+                            .cornerRadius(8)
+                    }
+                    .buttonStyle(.plain)
+                } else {
+                    Text("Unconfigured")
                         .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(Color(white: 0.2))
+                        .background(Color.gray)
                         .cornerRadius(8)
                 }
-                Link(destination: URL(string: "youtube://")!) {
-                    Text("YouTube")
+                
+                if let shortcut = entry.configuration.shortcutThree {
+                    Button(intent: RunSystemShortcutIntent(shortcut: shortcut)) {
+                        Text(shortcut.displayRepresentation.title)
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .background(Color(white: 0.2))
+                            .cornerRadius(8)
+                    }
+                    .buttonStyle(.plain)
+                } else {
+                    Text("Unconfigured")
                         .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(Color(white: 0.2))
+                        .background(Color.gray)
                         .cornerRadius(8)
                 }
             }
@@ -84,14 +127,13 @@ struct HelloWorldWidgetEntryView : View {
     
     var widgetGreeting: String {
         switch family {
-        case .systemSmall: return "Hello Small Widget"
         case .systemMedium: return "Hello Medium Widget"
         case .systemLarge: return "Hello Large Widget"
         case .systemExtraLarge: return "Hello Giant Widget"
         case .accessoryCircular: return "Hello Circular"
         case .accessoryRectangular: return "Hello Rect"
         case .accessoryInline: return "Hello Inline"
-        @unknown default: return "Hello Widget"
+        default: return "Hello Widget"
         }
     }
 }
@@ -101,11 +143,11 @@ struct HelloWorldWidget: Widget {
     let kind: String = "HelloWorldWidget"
 
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: Provider()) { entry in
+        AppIntentConfiguration(kind: kind, intent: LauncherWidgetConfigurationIntent.self, provider: Provider()) { entry in
             HelloWorldWidgetEntryView(entry: entry)
         }
-        .configurationDisplayName("Hello World Widget")
-        .description("This is a simple hello world widget.")
+        .configurationDisplayName("Launcher Widget")
+        .description("A customizable 3-button launcher.")
         .supportedFamilies([
             .systemSmall,
             .systemMedium,
