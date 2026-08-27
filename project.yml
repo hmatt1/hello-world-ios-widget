@@ -24,6 +24,7 @@ targets:
           UISceneConfigurations: {}
     dependencies:
       - target: HelloWorldWidget
+        embed: true
   
   HelloWorldWidget:
     type: app-extension

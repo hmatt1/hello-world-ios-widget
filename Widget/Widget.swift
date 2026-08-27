@@ -38,13 +38,26 @@ struct HelloWorldWidgetEntryView : View {
 
     var body: some View {
         VStack {
-            Text("Hello World")
+            Text(widgetGreeting)
                 .font(.headline)
             Text(entry.date, style: .time)
                 .font(.subheadline)
         }
         .containerBackground(for: .widget) {
             Color.blue.opacity(0.3)
+        }
+    }
+    
+    var widgetGreeting: String {
+        switch family {
+        case .systemSmall: return "Hello Small Widget"
+        case .systemMedium: return "Hello Medium Widget"
+        case .systemLarge: return "Hello Large Widget"
+        case .systemExtraLarge: return "Hello Giant Widget"
+        case .accessoryCircular: return "Hello Circular"
+        case .accessoryRectangular: return "Hello Rect"
+        case .accessoryInline: return "Hello Inline"
+        @unknown default: return "Hello Widget"
         }
     }
 }
