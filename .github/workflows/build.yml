@@ -12,7 +12,7 @@ on:
 jobs:
   build:
     name: Build iOS App
-    runs-on: macos-latest
+    runs-on: xcode-27
     permissions:
       contents: write
 
