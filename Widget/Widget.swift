@@ -37,14 +37,48 @@ struct HelloWorldWidgetEntryView : View {
     @Environment(\.widgetFamily) var family
 
     var body: some View {
-        VStack {
-            Text(widgetGreeting)
-                .font(.headline)
-            Text(entry.date, style: .time)
-                .font(.subheadline)
-        }
-        .containerBackground(for: .widget) {
-            Color.blue.opacity(0.3)
+        if family == .systemSmall {
+            VStack(spacing: 8) {
+                Link(destination: URL(string: "googlegmail://")!) {
+                    Text("Gmail")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(Color(white: 0.2))
+                        .cornerRadius(8)
+                }
+                Link(destination: URL(string: "x-web-search://?")!) {
+                    Text("Safari")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(Color(white: 0.2))
+                        .cornerRadius(8)
+                }
+                Link(destination: URL(string: "youtube://")!) {
+                    Text("YouTube")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(Color(white: 0.2))
+                        .cornerRadius(8)
+                }
+            }
+            .padding(.vertical, 8)
+            .padding(.horizontal, 4)
+            .containerBackground(for: .widget) {
+                Color.black
+            }
+        } else {
+            VStack {
+                Text(widgetGreeting)
+                    .font(.headline)
+                Text(entry.date, style: .time)
+                    .font(.subheadline)
+            }
+            .containerBackground(for: .widget) {
+                Color.blue.opacity(0.3)
+            }
         }
     }
     
