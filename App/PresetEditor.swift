@@ -79,7 +79,7 @@ struct PresetEditorView: View {
                                     }
                                 }
                                 
-                                Stepper(preset.columns == 0 ? "Columns: Auto" : "Columns: \(preset.columns)", value: $preset.columns, in: 0...6)
+                                Stepper(preset.columns == 0 ? "Columns: Auto" : "Columns: \(preset.columns)", value: $preset.columns, in: 0...12)
                                 
                                 Stepper("Margin X: \(Int(preset.marginX))", value: $preset.marginX, in: 0...40)
                                 Stepper("Margin Y: \(Int(preset.marginY))", value: $preset.marginY, in: 0...40)
