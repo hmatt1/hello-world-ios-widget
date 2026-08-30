@@ -29,7 +29,7 @@ struct ControlPaneView: View {
         case .medium:
             return [.auto, .singleHero, .horizontalStrip, .verticalList, .dualColumnGrid]
         case .large:
-            return [.auto, .gridMatrix, .listStack]
+            return [.auto, .gridMatrix, .verticalStack]
         }
     }
 
