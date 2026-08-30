@@ -45,23 +45,23 @@ struct PresetEditorView: View {
                 .frame(height: 360)
                 
                 Form {
-                    Section(header: Text("Name")) {
+                    Section(header: header("Name")) {
                         TextField("Preset Name", text: $preset.name)
                             .disabled(preset.id == BoardPresetStore.defaultPresetId)
                     }
                     
-                    Section(header: Text("Preview Settings")) {
-                        Picker("Family", selection: $size) {
-                            ForEach(BoardSize.allCases, id: \.self) { family in
-                                Text(family.displayName).tag(family)
-                            }
+                    Section(header: header("Preview Settings")) {
+                        Picker("Size", selection: $size) {
+                            Text("Small").tag(BoardSize.small)
+                            Text("Medium").tag(BoardSize.medium)
+                            Text("Large").tag(BoardSize.large)
                         }
                         .pickerStyle(.segmented)
                         
                         Stepper("Populated Slots: \(slots)", value: $slots, in: 1...12)
                     }
                     
-                    Section(header: Text("Layout")) {
+                    Section(header: header("Layout")) {
                         Menu {
                             ForEach(DensityTemplate.all) { template in
                                 Button(template.name) {
@@ -88,7 +88,7 @@ struct PresetEditorView: View {
                         Stepper("Corner Radius: \(Int(preset.cornerRadius))", value: $preset.cornerRadius, in: 0...32)
                     }
                     
-                    Section(header: Text("Background")) {
+                    Section(header: header("Background")) {
                         Picker("Style", selection: $preset.background) {
                             ForEach(BackgroundStyle.allCases, id: \.self) { style in
                                 Text(style.displayName).tag(style)
@@ -237,13 +237,31 @@ struct PresetEditorView: View {
     }
     
     @ViewBuilder
+    private func header(_ title: String) -> some View {
+        Text(title)
+            .font(.caption)
+            .fontWeight(.semibold)
+            .foregroundStyle(.primary)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+            .background(.regularMaterial, in: Capsule())
+            .padding(.leading, -16) // Offset default Form inset
+            .padding(.bottom, 4)
+    }
+
     private func themeIcon(_ theme: Theme) -> some View {
-        let colors = theme.spec.background.map(\.color)
-        Circle()
-            .fill(colors.count >= 2 ? 
-                  AnyShapeStyle(LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing)) : 
-                  AnyShapeStyle(colors.first ?? .clear))
-            .frame(width: 16, height: 16)
-            .overlay(Circle().strokeBorder(Color.primary.opacity(0.1), lineWidth: 1))
+        let colors = theme.spec.background
+        return Group {
+            if colors.count >= 2 {
+                LinearGradient(colors: colors.map(\.color), startPoint: .topLeading, endPoint: .bottomTrailing)
+            } else if let first = colors.first {
+                first.color
+            } else {
+                Color.clear
+            }
+        }
+        .frame(width: 20, height: 20)
+        .clipShape(Circle())
+        .overlay(Circle().stroke(Color.primary.opacity(0.1), lineWidth: 1))
     }
 }
