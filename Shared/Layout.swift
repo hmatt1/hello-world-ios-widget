@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 
-public enum LayoutPattern: String, CaseIterable, Sendable {
+enum LayoutPattern: String, CaseIterable, Sendable {
     case auto
     case singleHero
     case verticalStack
@@ -11,7 +11,7 @@ public enum LayoutPattern: String, CaseIterable, Sendable {
     case verticalList
     case dualColumnGrid
     
-    public var displayName: String {
+    var displayName: String {
         switch self {
         case .auto: return "Auto (Best Fit)"
         case .singleHero: return "Single Hero"
@@ -25,11 +25,11 @@ public enum LayoutPattern: String, CaseIterable, Sendable {
     }
 }
 
-public enum InternalCorners: String, CaseIterable, Sendable {
+enum InternalCorners: String, CaseIterable, Sendable {
     case rounded
     case square
     
-    public var displayName: String {
+    var displayName: String {
         switch self {
         case .rounded: return "Rounded"
         case .square: return "Square"
