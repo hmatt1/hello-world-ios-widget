@@ -22,28 +22,11 @@ struct PresetEditorView: View {
     }
     
     var body: some View {
-        ZStack {
-            if let img = wallpaperStore.image {
-                Image(uiImage: img)
-                    .resizable()
-                    .scaledToFill()
-                    .ignoresSafeArea()
-            } else {
-                LinearGradient(
-                    colors: [Color.blue.opacity(0.8), Color.purple.opacity(0.8)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
+        VStack(spacing: 0) {
+            ZStack {
+                boardView
             }
-            
-
-            VStack(spacing: 0) {
-                ZStack {
-                    boardView
-                }
-                .frame(height: 360)
-                .padding(.top, 32)
+            .frame(height: 360)
                 
                 ScrollView {
                     VStack(spacing: 24) {
@@ -177,6 +160,20 @@ struct PresetEditorView: View {
                     .padding(.bottom, 40)
                 }
                 .background(.regularMaterial)
+        }
+        .background {
+            if let img = wallpaperStore.image {
+                Image(uiImage: img)
+                    .resizable()
+                    .scaledToFill()
+                    .ignoresSafeArea()
+            } else {
+                LinearGradient(
+                    colors: [Color.blue.opacity(0.8), Color.purple.opacity(0.8)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
             }
         }
         .navigationTitle(preset.name)
