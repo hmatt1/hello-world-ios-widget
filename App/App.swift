@@ -90,21 +90,31 @@ struct ControlPaneView: View {
                     
                     if backgroundStyle == .theme {
                         Picker("Theme", selection: $theme) {
-                            ForEach(Theme.allCases, id: \.self) { theme in
-                                Text(theme.displayName).tag(theme)
+                            ForEach(Theme.allCases, id: \.self) { t in
+                                HStack {
+                                    themeIcon(t)
+                                    Text(t.displayName)
+                                }
+                                .tag(t)
                             }
                         }
                     }
                     
                     if backgroundStyle == .transparent {
-                        PhotosPicker(selection: $wallpaperItem, matching: .images) {
-                            HStack {
-                                Text("Upload Screenshot")
-                                Spacer()
-                                if wallpaperStore.image != nil {
-                                    Image(systemName: "checkmark.circle.fill").foregroundColor(.green)
+                        VStack(alignment: .leading, spacing: 6) {
+                            PhotosPicker(selection: $wallpaperItem, matching: .images) {
+                                HStack {
+                                    Text("Upload Screenshot")
+                                    Spacer()
+                                    if wallpaperStore.image != nil {
+                                        Image(systemName: "checkmark.circle.fill").foregroundColor(.green)
+                                    }
                                 }
                             }
+                            
+                            Text("Enter Jiggle mode, swipe to a blank page, and take a screenshot.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
                         }
                         .onChange(of: wallpaperItem) { _, newItem in
                             Task {
@@ -117,7 +127,7 @@ struct ControlPaneView: View {
                             }
                         }
                         
-                        Picker("Simulate Position", selection: $widgetPosition) {
+                        Picker("Preview Position", selection: $widgetPosition) {
                             ForEach(WidgetPosition.allCases, id: \.self) { pos in
                                 Text(pos.displayName).tag(pos)
                             }
@@ -188,6 +198,17 @@ struct ControlPaneView: View {
             RoundedRectangle(cornerRadius: 26, style: .continuous)
                 .strokeBorder(Color.primary.opacity(0.12), lineWidth: 1)
         }
+    }
+
+    @ViewBuilder
+    private func themeIcon(_ theme: Theme) -> some View {
+        let colors = theme.spec.background.map(\.color)
+        Circle()
+            .fill(colors.count >= 2 ? 
+                  AnyShapeStyle(LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing)) : 
+                  AnyShapeStyle(colors.first ?? .clear))
+            .frame(width: 16, height: 16)
+            .overlay(Circle().strokeBorder(Color.primary.opacity(0.1), lineWidth: 1))
     }
 }
 
