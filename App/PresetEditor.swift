@@ -1,0 +1,249 @@
+import SwiftUI
+import WidgetKit
+import PhotosUI
+
+struct PresetEditorView: View {
+    let presetId: UUID
+    @ObservedObject var store = BoardPresetStore.shared
+    
+    @State private var size: BoardSize = .medium
+    @State private var slots: Int = 4
+    
+    @State private var preset: BoardPreset
+    @State private var wallpaperItem: PhotosPickerItem?
+    @State private var widgetPosition: WidgetPosition = .topLeft
+    
+    @ObservedObject private var wallpaperStore = WallpaperStore.shared
+    
+    init(presetId: UUID) {
+        self.presetId = presetId
+        let p = BoardPresetStore.shared.presets.first(where: { $0.id == presetId }) ?? BoardPresetStore.createDefaultPreset()
+        _preset = State(initialValue: p)
+    }
+    
+    var body: some View {
+        ZStack {
+            if let img = wallpaperStore.image {
+                Image(uiImage: img)
+                    .resizable()
+                    .scaledToFill()
+                    .ignoresSafeArea()
+            } else {
+                LinearGradient(
+                    colors: [Color.blue.opacity(0.8), Color.purple.opacity(0.8)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
+            }
+            
+            
+            VStack(spacing: 0) {
+                ZStack {
+                    boardView
+                }
+                .frame(height: 360)
+                
+                Form {
+                    Section(header: Text("Name")) {
+                        TextField("Preset Name", text: $preset.name)
+                            .disabled(preset.id == BoardPresetStore.defaultPresetId)
+                    }
+                    
+                    Section(header: Text("Preview Settings")) {
+                        Picker("Family", selection: $size) {
+                            ForEach(BoardSize.allCases, id: \.self) { family in
+                                Text(family.displayName).tag(family)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                        
+                        Stepper("Populated Slots: \(slots)", value: $slots, in: 1...12)
+                    }
+                    
+                    Section(header: Text("Layout")) {
+                        Menu {
+                            ForEach(DensityTemplate.all) { template in
+                                Button(template.name) {
+                                    applyTemplate(template)
+                                }
+                            }
+                        } label: {
+                            HStack {
+                                Text("Apply Template")
+                                Spacer()
+                                Text(currentTemplateName)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        
+                        Stepper(preset.columns == 0 ? "Columns: Auto" : "Columns: \(preset.columns)", value: $preset.columns, in: 0...6)
+                        
+                        Stepper("Margin X: \(Int(preset.marginX))", value: $preset.marginX, in: 0...32)
+                        Stepper("Margin Y: \(Int(preset.marginY))", value: $preset.marginY, in: 0...32)
+                        Stepper("Spacing X: \(Int(preset.spacingX))", value: $preset.spacingX, in: 0...32)
+                        Stepper("Spacing Y: \(Int(preset.spacingY))", value: $preset.spacingY, in: 0...32)
+                        Stepper("Padding X: \(Int(preset.paddingX))", value: $preset.paddingX, in: 0...24)
+                        Stepper("Padding Y: \(Int(preset.paddingY))", value: $preset.paddingY, in: 0...24)
+                        Stepper("Corner Radius: \(Int(preset.cornerRadius))", value: $preset.cornerRadius, in: 0...32)
+                    }
+                    
+                    Section(header: Text("Background")) {
+                        Picker("Style", selection: $preset.background) {
+                            ForEach(BackgroundStyle.allCases, id: \.self) { style in
+                                Text(style.displayName).tag(style)
+                            }
+                        }
+                        
+                        if preset.background == .theme {
+                            Picker("Theme", selection: $preset.theme) {
+                                ForEach(Theme.allCases, id: \.self) { t in
+                                    HStack {
+                                        themeIcon(t)
+                                        Text(t.displayName)
+                                    }
+                                    .tag(t)
+                                }
+                            }
+                        }
+                        
+                        if preset.background == .transparent || preset.background == .glassTiles {
+                            VStack(alignment: .leading, spacing: 6) {
+                                PhotosPicker(selection: $wallpaperItem, matching: .images) {
+                                    HStack {
+                                        Text("Upload Screenshot")
+                                        Spacer()
+                                        if wallpaperStore.image != nil {
+                                            Image(systemName: "checkmark.circle.fill").foregroundColor(.green)
+                                        }
+                                    }
+                                }
+                            }
+                            .onChange(of: wallpaperItem) { _, newItem in
+                                Task {
+                                    if let data = try? await newItem?.loadTransferable(type: Data.self),
+                                       let uiImage = UIImage(data: data) {
+                                        await MainActor.run {
+                                            wallpaperStore.save(image: uiImage, screenBounds: UIScreen.main.bounds.size)
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            Picker("Preview Position", selection: $widgetPosition) {
+                                ForEach(WidgetPosition.allCases, id: \.self) { pos in
+                                    Text(pos.displayName).tag(pos)
+                                }
+                            }
+
+                            Stepper("Fine-tune X: \(Int(preset.bgOffsetX))", value: $preset.bgOffsetX, in: -100...100)
+                            Stepper("Fine-tune Y: \(Int(preset.bgOffsetY))", value: $preset.bgOffsetY, in: -100...100)
+                        }
+                    }
+                    
+                    if preset.id == BoardPresetStore.defaultPresetId {
+                        Section {
+                            Button("Reset to Original") {
+                                store.resetToOriginal(id: preset.id)
+                                if let p = store.presets.first(where: { $0.id == presetId }) {
+                                    preset = p
+                                }
+                            }
+                            .foregroundColor(.red)
+                        }
+                    }
+                }
+                .scrollContentBackground(.hidden)
+                .listRowBackground(Color.clear.background(.regularMaterial))
+            }
+        }
+        .navigationTitle(preset.name)
+        .navigationBarTitleDisplayMode(.inline)
+        .onChange(of: preset) { _, newPreset in
+            store.update(newPreset)
+            WidgetCenter.shared.reloadAllTimelines()
+        }
+    }
+    
+    private var currentTemplateName: String {
+        for template in DensityTemplate.all {
+            if preset.marginX == template.layout.marginX &&
+               preset.marginY == template.layout.marginY &&
+               preset.spacingX == template.layout.spacingX &&
+               preset.spacingY == template.layout.spacingY &&
+               preset.paddingX == template.layout.paddingX &&
+               preset.paddingY == template.layout.paddingY &&
+               preset.cornerRadius == template.layout.cornerRadius {
+                return template.name
+            }
+        }
+        return "Custom"
+    }
+    
+    private func applyTemplate(_ template: DensityTemplate) {
+        preset.marginX = template.layout.marginX
+        preset.marginY = template.layout.marginY
+        preset.spacingX = template.layout.spacingX
+        preset.spacingY = template.layout.spacingY
+        preset.paddingX = template.layout.paddingX
+        preset.paddingY = template.layout.paddingY
+        preset.cornerRadius = template.layout.cornerRadius
+    }
+    
+    private var boardView: some View {
+        let rawNames = (0..<slots).map { BoardSample.names[$0 % BoardSample.names.count] }
+        let layout = preset.layoutValues
+        
+        let resolved = BoardGrid.resolve(
+            count: slots,
+            size: size,
+            longestName: rawNames.map(\.count).max() ?? 0,
+            layout: layout
+        )
+        let grid = resolved.grid
+        let names = Array(rawNames.prefix(resolved.visibleSlots))
+        
+        return BoardView(grid: grid, count: names.count) { index in
+            SlotFace(
+                name: names[index],
+                surface: preset.theme.surface(at: index, accented: false),
+                label: preset.theme.labelColor(accented: false),
+                mode: grid.mode,
+                font: grid.font,
+                paddingX: grid.layout.paddingX,
+                paddingY: grid.layout.paddingY,
+                cornerRadius: grid.layout.cornerRadius,
+                style: preset.background,
+                accented: false
+            )
+        }
+        .frame(width: size.canvas.width, height: size.canvas.height)
+        .background { 
+            BoardBackground(
+                theme: preset.theme,
+                accented: false,
+                style: preset.background,
+                position: widgetPosition,
+                family: size,
+                offsetX: preset.bgOffsetX,
+                offsetY: preset.bgOffsetY
+            ) 
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 26, style: .continuous)
+                .strokeBorder(Color.primary.opacity(0.12), lineWidth: 1)
+        }
+    }
+    
+    @ViewBuilder
+    private func themeIcon(_ theme: Theme) -> some View {
+        let colors = theme.spec.background.map(\.color)
+        Circle()
+            .fill(colors.count >= 2 ? 
+                  AnyShapeStyle(LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing)) : 
+                  AnyShapeStyle(colors.first ?? .clear))
+            .frame(width: 16, height: 16)
+            .overlay(Circle().strokeBorder(Color.primary.opacity(0.1), lineWidth: 1))
+    }
+}

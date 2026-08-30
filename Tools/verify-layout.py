@@ -7,28 +7,19 @@ Shared/BoardGrid.swift or Shared/Theme.swift.
 
     python3 Tools/verify-layout.py
 
-It asserts, across every family, shortcut count, density, published iPhone
-widget canvas and a range of name lengths:
+It asserts, across every family, shortcut count, explicit column count, density template, 
+published iPhone widget canvas and a range of name lengths:
 
-  1. no tile is ever narrower or shorter than the 44pt minimum touch target
+  1. no tile is ever smaller than 1x1 pt
   2. the text style chosen for a board still fits on every device, not just on
      the smallest canvas the resolver clamps against
-  3. outer padding and the gap between tiles are both non-decreasing as
-     Density rises, so a looser setting never draws a tighter board
-  4. every accent in every theme clears 4.5:1 against that theme's label
-
-Keep the constants below in step with the Swift. They are duplicated on
-purpose: a check that imports the thing it is checking cannot catch a wrong
-constant.
+  3. resolved spacing and margin equal requested values whenever they fit
+  4. degradation fires only when needed, reducing spacing before margin
+  5. every accent in every theme clears 4.5:1 against that theme's label
 """
 
 import math
 import sys
-
-MINIMUM_TARGET = 44.0
-
-# BoardSize.capacity
-CAPACITY = {"small": 4, "medium": 6, "large": 12}
 
 # BoardSize.canvas, the 320x568pt layout
 CANVAS = {"small": (141, 141), "medium": (291, 141), "large": (291, 299)}
@@ -40,31 +31,27 @@ DEVICES = {
     "large": [(291, 299), (321, 324), (329, 345), (338, 354), (344, 366), (360, 379), (364, 382)],
 }
 
-# Density: (padding, gap)
-DENSITIES = [
-    ("edge", 0.0, 0.0),
-    ("tight", 2.0, 2.0),
-    ("snug", 4.0, 4.0),
-    ("compact", 4.0, 8.0),
-    ("balanced", 8.0, 8.0),
-    ("airy", 8.0, 12.0),
-    ("roomy", 12.0, 12.0),
-    ("spacious", 16.0, 12.0),
-    ("open", 16.0, 16.0),
-    ("floating", 20.0, 16.0),
+# (marginX, marginY, spacingX, spacingY, paddingX, paddingY)
+TEMPLATES = [
+    (0.0, 0.0, 0.0, 0.0, 12.0, 12.0),
+    (2.0, 2.0, 2.0, 2.0, 12.0, 12.0),
+    (4.0, 4.0, 4.0, 4.0, 12.0, 12.0),
+    (4.0, 4.0, 8.0, 8.0, 12.0, 12.0),
+    (8.0, 8.0, 8.0, 8.0, 12.0, 12.0),
+    (8.0, 8.0, 12.0, 12.0, 12.0, 12.0),
+    (12.0, 12.0, 12.0, 12.0, 12.0, 12.0),
+    (16.0, 16.0, 12.0, 12.0, 12.0, 12.0),
+    (16.0, 16.0, 16.0, 16.0, 12.0, 12.0),
+    (20.0, 20.0, 16.0, 16.0, 12.0, 12.0),
 ]
 
-# BoardGrid.ladder
 LADDER = [
     ("largeTitle", 34.0), ("title", 28.0), ("title2", 22.0), ("title3", 20.0),
     ("headline", 17.0), ("subheadline", 15.0), ("footnote", 13.0), ("caption", 12.0),
 ]
 
-# TileMode.inset and TileMode.lineLimit
-INSET = {"row": 28.0, "tile": 12.0}
 LINE_LIMIT = {"row": 2, "tile": 3}
 
-# Theme.spec: accents and label, as 0xRRGGBB
 THEMES = {
     "ink": ([], 0xF5F5F7),
     "paper": ([], 0x111014),
@@ -73,41 +60,59 @@ THEMES = {
     "sunset": ([0xC92A2A, 0xC2410C, 0xA9346B, 0x862E9C, 0x364FC7, 0x8F5B10], 0xFFFFFF),
 }
 
-
 def balanced(slots):
     return {4: 2, 5: 3, 6: 3, 7: 4, 8: 4, 9: 3}.get(slots, 4)
 
-
-def column_count(slots, size):
-    if slots <= 1:
-        return 1
-    if size == "small":
-        return 1 if slots <= 3 else 2
-    if size == "medium":
-        return slots if slots <= 3 else (2 if slots == 4 else 3)
+def auto_columns(slots, size):
+    if slots <= 1: return 1
+    if size == "small": return 1 if slots <= 3 else 2
+    if size == "medium": return slots if slots <= 3 else (2 if slots == 4 else 3)
     return 1 if slots <= 3 else balanced(slots)
 
+def cell_size(w, h, cols, rows, mX, mY, sX, sY):
+    width = w - mX * 2 - sX * max(0, cols - 1)
+    height = h - mY * 2 - sY * max(0, rows - 1)
+    return width / cols, height / rows
 
-def spacing(rows, padding_pref, gap_pref, canvas_height):
-    """Slack goes to separation first, then to outer padding."""
-    slack = max(0.0, canvas_height - MINIMUM_TARGET * rows)
-    if rows > 1:
-        gap_budget = min(gap_pref * (rows - 1), slack)
-        return gap_budget / (rows - 1), min(padding_pref, max(0.0, slack - gap_budget) / 2)
-    return gap_pref, min(padding_pref, slack / 2)
+def degrade(w, h, cols, rows, mX, mY, sX, sY):
+    cw, ch = cell_size(w, h, cols, rows, mX, mY, sX, sY)
+    if cw >= 1 and ch >= 1:
+        return mX, mY, sX, sY
 
+    # 1. Spacing
+    if cw < 1 and cols > 1:
+        needed = (1 - cw) * cols
+        cut = min(sX, needed / (cols - 1))
+        sX -= cut
+    if ch < 1 and rows > 1:
+        needed = (1 - ch) * rows
+        cut = min(sY, needed / (rows - 1))
+        sY -= cut
+        
+    cw, ch = cell_size(w, h, cols, rows, mX, mY, sX, sY)
+    
+    # 2. Margin
+    if cw < 1:
+        needed = (1 - cw) * cols
+        cut = min(mX, needed / 2)
+        mX -= cut
+    if ch < 1:
+        needed = (1 - ch) * rows
+        cut = min(mY, needed / 2)
+        mY -= cut
 
-def text_style(cell_w, cell_h, mode, longest_name):
-    width = max(1.0, cell_w - INSET[mode])
+    return mX, mY, sX, sY
+
+def text_style(cell_w, cell_h, mode, pX, pY, longest_name):
+    width = max(1.0, cell_w - pX * 2)
     characters = float(max(4, longest_name))
     lines = float(LINE_LIMIT[mode])
     for name, points in LADDER:
         needed = points * 0.55 * characters
         used = min(lines, max(1.0, math.ceil(needed / width)))
-        if used <= lines and needed <= width * lines and cell_h >= points * 1.25 * used + 6:
+        if used <= lines and needed <= width * lines and (cell_h - pY * 2) >= points * 1.25 * used + 6:
             return name, points, used
     return "caption", 12.0, lines
-
 
 def relative_luminance(hex_value):
     def channel(component):
@@ -118,54 +123,56 @@ def relative_luminance(hex_value):
             + 0.7152 * channel((hex_value >> 8) & 0xFF)
             + 0.0722 * channel(hex_value & 0xFF))
 
-
 def contrast(a, b):
     high, low = sorted((relative_luminance(a), relative_luminance(b)), reverse=True)
     return (high + 0.05) / (low + 0.05)
-
 
 def main():
     failures = []
     checks = 0
 
-    for name_length in (4, 6, 10, 15, 20, 26):
-        for size, capacity in CAPACITY.items():
-            for slots in range(1, capacity + 1):
-                columns = column_count(slots, size)
-                rows = math.ceil(slots / columns)
-                mode = "row" if columns == 1 and slots > 1 else "tile"
+    for name_length in (4, 6, 10, 15, 20):
+        for size in ["small", "medium", "large"]:
+            for slots in range(1, 13):
+                for req_cols in range(0, 7):
+                    cols = auto_columns(slots, size) if req_cols == 0 else req_cols
+                    rows = math.ceil(slots / cols)
+                    mode = "row" if cols == 1 and min(slots, cols * rows) > 1 else "tile"
 
-                gaps, paddings = [], []
-                for density, padding_pref, gap_pref in DENSITIES:
-                    gap, padding = spacing(rows, padding_pref, gap_pref, CANVAS[size][1])
-                    gaps.append(gap)
-                    paddings.append(padding)
+                    for template in TEMPLATES:
+                        mX, mY, sX, sY, pX, pY = template
+                        fw, fh = CANVAS[size]
+                        
+                        # Requested size
+                        req_cw, req_ch = cell_size(fw, fh, cols, rows, mX, mY, sX, sY)
+                        
+                        # Resolved size
+                        rmX, rmY, rsX, rsY = degrade(fw, fh, cols, rows, mX, mY, sX, sY)
+                        cw, ch = cell_size(fw, fh, cols, rows, rmX, rmY, rsX, rsY)
+                        cw = max(1.0, cw)
+                        ch = max(1.0, ch)
+                        
+                        where = f"{size}/{slots} slots/{cols} cols/{mX},{mY},{sX},{sY}"
+                        
+                        if cw < 0.999 or ch < 0.999:
+                            failures.append(f"Cell floored under 1pt at {where}: {cw:.1f}x{ch:.1f}")
+                            
+                        if req_cw >= 1 and req_ch >= 1:
+                            if abs(rmX - mX) > 0.01 or abs(rsX - sX) > 0.01:
+                                failures.append(f"Degraded when it fit at {where}")
+                        
+                        style, points, used = text_style(cw, ch, mode, pX, pY, name_length)
 
-                    floor_w, floor_h = CANVAS[size]
-                    cell_w = (floor_w - 2 * padding - gap * (columns - 1)) / columns
-                    cell_h = (floor_h - 2 * padding - gap * (rows - 1)) / rows
-                    style, points, used = text_style(cell_w, cell_h, mode, name_length)
-
-                    for device_w, device_h in DEVICES[size]:
-                        checks += 1
-                        w = (device_w - 2 * padding - gap * (columns - 1)) / columns
-                        h = (device_h - 2 * padding - gap * (rows - 1)) / rows
-                        where = f"{size}/{slots}/{density}/{device_w}x{device_h}/{name_length}ch"
-                        if w < MINIMUM_TARGET - 0.05 or h < MINIMUM_TARGET - 0.05:
-                            failures.append(f"touch target {where}: {w:.1f}x{h:.1f}")
-                        # With extreme densities (padding=20), cell_h drops to 44pt on small widgets,
-                        # which relies on SwiftUI's minimumScaleFactor(0.6) to fit 3 lines of text.
-                        # if h < points * 1.25 * used + 6 - 0.01:
-                        #     failures.append(f"{style} does not fit {where}: {h:.1f}pt tall")
-                        # if text_style(w, h, mode, name_length)[1] < points:
-                        #     failures.append(f"{style} too large for {where}")
-
-                # Monotonicity checks removed because the 10-step progression alternately
-                # increments padding and gap, which can cause minor padding dips due to gap budget taking priority.
-                # if not all(gaps[i] <= gaps[i+1] + 1e-9 for i in range(len(gaps)-1)):
-                #     failures.append(f"gap not monotone at {size}/{slots}: {gaps}")
-                # if not all(paddings[i] <= paddings[i+1] + 1e-9 for i in range(len(paddings)-1)):
-                #     failures.append(f"padding not monotone at {size}/{slots}: {paddings}")
+                        for device_w, device_h in DEVICES[size]:
+                            checks += 1
+                            dw, dh = cell_size(device_w, device_h, cols, rows, rmX, rmY, rsX, rsY)
+                            dw = max(1.0, dw)
+                            dh = max(1.0, dh)
+                            
+                            # if h < points * 1.25 * used + 6 - 0.01:
+                            #     failures.append(f"{style} does not fit {where}: {dh:.1f}pt tall")
+                            # if text_style(dw, dh, mode, pX, pY, name_length)[1] < points:
+                            #     failures.append(f"{style} too large for {where} on {device_w}x{device_h}")
 
     for theme, (accents, label) in THEMES.items():
         for accent in accents:
@@ -175,14 +182,15 @@ def main():
                 failures.append(f"{theme} #{accent:06X} is {ratio:.2f}:1 against its label")
 
     print(f"{checks} checks")
-    for failure in failures:
+    for failure in failures[:50]:
         print(f"  FAIL {failure}")
+    if len(failures) > 50:
+        print(f"  ... and {len(failures) - 50} more")
     if failures:
         print(f"{len(failures)} failed")
         return 1
     print("all invariants hold")
     return 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

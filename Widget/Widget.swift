@@ -58,13 +58,15 @@ struct LauncherWidgetView: View {
             ? slots.map { String(localized: $0.displayRepresentation.title) }
             : sample
         
+        let presetId = entry.configuration.preset?.id ?? BoardPresetStore.defaultPresetId
+        let preset = BoardPresetStore.loadPreset(id: presetId)
+        let layout = preset.layoutValues
+        
         let resolved = BoardGrid.resolve(
             count: rawNames.count,
             size: size,
-            density: entry.configuration.density,
             longestName: rawNames.map(\.count).max() ?? 0,
-            pattern: entry.configuration.layoutPattern,
-            corners: entry.configuration.internalCorners
+            layout: layout
         )
         
         let grid = resolved.grid
@@ -72,40 +74,45 @@ struct LauncherWidgetView: View {
 
         Group {
             if names.isEmpty {
-                BoardEmptyState(theme: entry.configuration.theme, accented: accented)
+                BoardEmptyState(theme: preset.theme, accented: accented)
             } else {
                 BoardView(grid: grid, count: names.count) { index in
                     if sample.isEmpty {
                         Button(intent: RunSystemShortcutIntent(shortcut: slots[index])) {
-                            face(name: names[index], index: index, grid: grid, accented: accented)
+                            face(name: names[index], index: index, grid: grid, accented: accented, theme: preset.theme, style: preset.background)
                         }
                         .buttonStyle(.plain)
                     } else {
-                        face(name: names[index], index: index, grid: grid, accented: accented)
+                        face(name: names[index], index: index, grid: grid, accented: accented, theme: preset.theme, style: preset.background)
                     }
                 }
             }
         }
         .containerBackground(for: .widget) {
             BoardBackground(
-                theme: entry.configuration.theme,
+                theme: preset.theme,
                 accented: accented,
-                style: entry.configuration.backgroundStyle,
+                style: preset.background,
                 position: entry.configuration.widgetPosition,
-                family: size
+                family: size,
+                offsetX: preset.bgOffsetX,
+                offsetY: preset.bgOffsetY
             )
         }
     }
 
-    private func face(name: String, index: Int, grid: BoardGrid, accented: Bool) -> SlotFace {
-        let theme = entry.configuration.theme
+    private func face(name: String, index: Int, grid: BoardGrid, accented: Bool, theme: Theme, style: BackgroundStyle) -> SlotFace {
         return SlotFace(
             name: name,
             surface: theme.surface(at: index, accented: accented),
             label: theme.labelColor(accented: accented),
             mode: grid.mode,
             font: grid.font,
-            cornerRadius: grid.cornerRadius
+            paddingX: grid.layout.paddingX,
+            paddingY: grid.layout.paddingY,
+            cornerRadius: grid.layout.cornerRadius,
+            style: style,
+            accented: accented
         )
     }
 }

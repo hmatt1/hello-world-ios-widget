@@ -32,6 +32,9 @@ struct BoardBackground: View {
     let position: WidgetPosition
     let family: BoardSize
 
+    let offsetX: CGFloat
+    let offsetY: CGFloat
+
     @ObservedObject private var store = WallpaperStore.shared
 
     var body: some View {
@@ -43,8 +46,8 @@ struct BoardBackground: View {
                 themeBackground
             case .liquidGlass:
                 Rectangle()
-                    .fill(.ultraThinMaterial)
-            case .transparent:
+                    .fill(.regularMaterial)
+            case .glassTiles, .transparent:
                 transparentBackground
             }
         }
@@ -70,11 +73,12 @@ struct BoardBackground: View {
     private var transparentBackground: some View {
         GeometryReader { proxy in
             if let img = store.image, let screen = store.screenBounds {
+                let crop = cropOffset(for: position, widgetSize: proxy.size, screen: screen)
                 Image(uiImage: img)
                     .resizable()
                     .scaledToFill()
                     .frame(width: screen.width, height: screen.height)
-                    .offset(cropOffset(for: position, widgetSize: proxy.size, screen: screen))
+                    .offset(x: crop.width + offsetX, y: crop.height + offsetY)
             } else {
                 themeBackground
             }
@@ -120,7 +124,11 @@ struct SlotFace: View {
     let label: Color
     let mode: TileMode
     let font: Font
+    let paddingX: CGFloat
+    let paddingY: CGFloat
     let cornerRadius: CGFloat
+    let style: BackgroundStyle
+    let accented: Bool
 
     var body: some View {
         Text(name)
@@ -131,22 +139,27 @@ struct SlotFace: View {
             .minimumScaleFactor(0.6)
             .multilineTextAlignment(mode == .row ? .leading : .center)
             .dynamicTypeSize(...DynamicTypeSize.accessibility1)
-            .padding(.horizontal, mode.inset / 2)
+            .padding(.horizontal, paddingX)
+            .padding(.vertical, paddingY)
             .frame(
                 maxWidth: .infinity,
                 maxHeight: .infinity,
                 alignment: mode == .row ? .leading : .center
             )
             .background {
-                // The fill is inset by half a point on every side, so two
-                // flush tiles leave a hairline of the background between them.
-                // At Edge there is no gap, and in accented mode, Ink and Paper
-                // every tile carries the same fill, so this line is the only
-                // thing marking where one tap target ends. The target itself
-                // is the full frame and is unaffected.
-                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .fill(surface)
-                    .padding(0.5)
+                if !accented && style == .glassTiles {
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        .fill(.regularMaterial)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                                .fill(surface.opacity(0.15))
+                        )
+                        .padding(0.5)
+                } else {
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        .fill(surface)
+                        .padding(0.5)
+                }
             }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(name)

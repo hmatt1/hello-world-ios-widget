@@ -22,27 +22,20 @@ One text size is chosen for the whole board, from the longest name it has to hol
 
 `Theme = Ink` with `Density = Edge` is the minimum: one near-black field, names in faint chips, edge to edge.
 
-## Layout
+## Layout Configuration Rework
 
-Structure comes from the family and the number of shortcuts. There is no layout control, because there is nothing left for one to decide.
+The old layout engine computed gaps and paddings mathematically, clamping separation to ensure tiles never shrank below 44pt. It was configured using `Density` and `LayoutPattern` enums strictly inside the `LauncherIntent` widget menu, which is limited by iOS to 14 rows. 
 
-| Shortcuts | Small | Medium | Large |
-|---|---|---|---|
-| 1 | one tile | one tile | one tile |
-| 2 to 3 | 1 column, left aligned | 1 row | 1 column, left aligned |
-| 4 | 2 × 2 | 2 × 2 | 2 × 2 |
-| 5 to 6 | — | 3 × 2 | 3 × 2 |
-| 7 to 12 | — | — | balanced grid |
+The new layout engine is explicit. `BoardPreset` holds precise `marginX`, `spacingX`, `paddingX`, `columns`, and `cornerRadius` properties. When these exact dimensions can't fit on the canvas, the engine degrades by gracefully reducing gap space first, then margin, before finally flooring cell size at 1pt (no more 44pt clamp).
 
-Capacity is 4 on small, 6 on medium, 12 on large. Balanced grid column counts:
+Because the configuration surface requires sliders and steppers to edit these exact values, presets are authored in the main iOS app instead of the widget menu.
 
-| Slots | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 |
-|---|---|---|---|---|---|---|---|---|---|
-| Columns | 2 | 3 | 3 | 4 | 4 | 3 | 4 | 4 | 4 |
+### BoardPresetStore and App Groups
+Presets are managed by `BoardPresetStore`, which persists them as JSON via `UserDefaults`. Because the Widget runs in a separate process from the App, they must communicate through an App Group (`group.com.hmatt1.launcherboard`). 
 
-`Density` sets outer padding and the gap between tiles: `Edge` 0pt, `Compact` 4pt padding with an 8pt gap, `Roomy` 12pt. When a board is tall enough that both would push a tile under the 44pt minimum touch target, separation between tiles is paid first and outer padding takes the remainder, so both stay non-decreasing as density rises. Every tile runs a shortcut, so none of them is allowed to be smaller than a finger.
+The widget reads the preset via `BoardPresetStore.loadRaw()`. Saving an edit in the app triggers `WidgetCenter.shared.reloadAllTimelines()` to push the changes instantly.
 
-The clamp runs against the smallest canvas iOS gives a family, the 320 × 568pt layout a 4.7 inch iPhone reaches with Display Zoom on (141 × 141, 291 × 141, 291 × 299), so tiles only ever grow on bigger phones.
+If an existing widget on a user's home screen was placed with the older version of the app, its `LauncherIntent` will have outdated properties. The `LauncherIntent` now uses an `EntityQuery` to look up the new `preset` parameter. By fallback, any corrupted or unreadable store automatically resolves to a built-in `Default` preset, avoiding blank widgets during upgrades.
 
 `BoardGrid.resolve` is pure arithmetic, so its invariants are checkable without a simulator:
 
@@ -50,7 +43,7 @@ The clamp runs against the smallest canvas iOS gives a family, the 320 × 568pt 
 python3 Tools/verify-layout.py
 ```
 
-That walks every family, shortcut count, density, published iPhone widget canvas and a range of name lengths, and asserts that no tile falls under the 44pt touch target, that the chosen text style still fits on every device rather than only on the smallest, that padding and gap are both non-decreasing as Density rises, and that every accent clears 4.5:1 against its label. 2790 checks. Run it after touching `Shared/BoardGrid.swift` or `Shared/Theme.swift`.
+That walks every family, shortcut count, explicit column count, template, published iPhone widget canvas and a range of name lengths, and asserts that no cell shrinks below 1pt, that the chosen text style still fits on every device rather than only on the smallest, that resolved values match requested values when space permits, and that every accent clears 4.5:1 against its label. Run it after touching `Shared/BoardGrid.swift` or `Shared/BoardPreset.swift`.
 
 ## Rendering
 

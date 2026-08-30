@@ -1,92 +1,7 @@
 import Foundation
 import AppIntents
 
-extension Theme: AppEnum {
-    static var typeDisplayRepresentation: TypeDisplayRepresentation {
-        TypeDisplayRepresentation(name: "Theme")
-    }
 
-    /// Spelled out rather than derived from `displayName`. AppIntents lifts
-    /// these at build time and its extractor only reads literal dictionaries,
-    /// so a computed one risks the picker showing raw case names on device.
-    static var caseDisplayRepresentations: [Theme: DisplayRepresentation] {
-        [
-            .ink: DisplayRepresentation(title: "Ink"),
-            .paper: DisplayRepresentation(title: "Paper"),
-            .midnight: DisplayRepresentation(title: "Midnight"),
-            .aurora: DisplayRepresentation(title: "Aurora"),
-            .sunset: DisplayRepresentation(title: "Sunset")
-        ]
-    }
-}
-
-extension Density: AppEnum {
-    static var typeDisplayRepresentation: TypeDisplayRepresentation {
-        TypeDisplayRepresentation(name: "Density")
-    }
-
-    static var caseDisplayRepresentations: [Density: DisplayRepresentation] {
-        [
-            .edge: DisplayRepresentation(title: "Edge"),
-            .tight: DisplayRepresentation(title: "Tight"),
-            .snug: DisplayRepresentation(title: "Snug"),
-            .compact: DisplayRepresentation(title: "Compact"),
-            .balanced: DisplayRepresentation(title: "Balanced"),
-            .airy: DisplayRepresentation(title: "Airy"),
-            .roomy: DisplayRepresentation(title: "Roomy"),
-            .spacious: DisplayRepresentation(title: "Spacious"),
-            .open: DisplayRepresentation(title: "Open"),
-            .floating: DisplayRepresentation(title: "Floating")
-        ]
-    }
-}
-
-extension LayoutPattern: AppEnum {
-    static var typeDisplayRepresentation: TypeDisplayRepresentation {
-        TypeDisplayRepresentation(name: "Layout Pattern")
-    }
-
-    static var caseDisplayRepresentations: [LayoutPattern: DisplayRepresentation] {
-        [
-            .auto: DisplayRepresentation(title: "Auto (Best Fit)"),
-            .singleHero: DisplayRepresentation(title: "Single Hero"),
-            .verticalStack: DisplayRepresentation(title: "Vertical Stack"),
-            .horizontalStack: DisplayRepresentation(title: "Horizontal Stack"),
-            .gridMatrix: DisplayRepresentation(title: "Grid Matrix"),
-            .horizontalStrip: DisplayRepresentation(title: "Horizontal Strip"),
-            .verticalList: DisplayRepresentation(title: "Vertical List"),
-            .dualColumnGrid: DisplayRepresentation(title: "Dual Column Grid")
-        ]
-    }
-}
-
-extension InternalCorners: AppEnum {
-    static var typeDisplayRepresentation: TypeDisplayRepresentation {
-        TypeDisplayRepresentation(name: "Internal Corners")
-    }
-
-    static var caseDisplayRepresentations: [InternalCorners: DisplayRepresentation] {
-        [
-            .rounded: DisplayRepresentation(title: "Rounded"),
-            .square: DisplayRepresentation(title: "Square"),
-            .sharp: DisplayRepresentation(title: "Sharp")
-        ]
-    }
-}
-
-extension BackgroundStyle: AppEnum {
-    static var typeDisplayRepresentation: TypeDisplayRepresentation {
-        TypeDisplayRepresentation(name: "Background Style")
-    }
-
-    static var caseDisplayRepresentations: [BackgroundStyle: DisplayRepresentation] {
-        [
-            .theme: DisplayRepresentation(title: "Theme (Solid)"),
-            .liquidGlass: DisplayRepresentation(title: "Liquid Glass"),
-            .transparent: DisplayRepresentation(title: "Transparent")
-        ]
-    }
-}
 
 extension WidgetPosition: AppEnum {
     static var typeDisplayRepresentation: TypeDisplayRepresentation {
@@ -105,6 +20,40 @@ extension WidgetPosition: AppEnum {
             .middle: DisplayRepresentation(title: "Middle"),
             .bottom: DisplayRepresentation(title: "Bottom")
         ]
+    }
+}
+
+struct BoardPresetEntity: AppEntity {
+    static var typeDisplayRepresentation: TypeDisplayRepresentation {
+        TypeDisplayRepresentation(name: "Preset")
+    }
+
+    static var defaultQuery = BoardPresetQuery()
+
+    let id: UUID
+    let name: String
+
+    var displayRepresentation: DisplayRepresentation {
+        DisplayRepresentation(title: "\(name)")
+    }
+}
+
+struct BoardPresetQuery: EntityQuery {
+    func entities(for identifiers: [BoardPresetEntity.ID]) async throws -> [BoardPresetEntity] {
+        let presets = BoardPresetStore.loadRaw()
+        return presets.filter { identifiers.contains($0.id) }.map { BoardPresetEntity(id: $0.id, name: $0.name) }
+    }
+
+    func suggestedEntities() async throws -> [BoardPresetEntity] {
+        BoardPresetStore.loadRaw().map { BoardPresetEntity(id: $0.id, name: $0.name) }
+    }
+    
+    func defaultResult() async -> BoardPresetEntity? {
+        let presets = BoardPresetStore.loadRaw()
+        if let defaultPreset = presets.first(where: { $0.id == BoardPresetStore.defaultPresetId }) {
+            return BoardPresetEntity(id: defaultPreset.id, name: defaultPreset.name)
+        }
+        return nil
     }
 }
 
@@ -153,21 +102,9 @@ struct LauncherIntent: WidgetConfigurationIntent {
     @Parameter(title: "12")
     var shortcut12: SystemShortcut?
 
-    @Parameter(title: "Layout Pattern", default: .auto)
-    var layoutPattern: LayoutPattern
+    @Parameter(title: "Preset")
+    var preset: BoardPresetEntity?
 
-    @Parameter(title: "Theme", default: .midnight)
-    var theme: Theme
-
-    @Parameter(title: "Density", default: .compact)
-    var density: Density
-
-    @Parameter(title: "Internal Corners", default: .rounded)
-    var internalCorners: InternalCorners
-    
-    @Parameter(title: "Background", default: .theme)
-    var backgroundStyle: BackgroundStyle
-    
     @Parameter(title: "Position (If Transparent)", default: .topLeft)
     var widgetPosition: WidgetPosition
 

@@ -15,15 +15,6 @@ enum BoardSize: CaseIterable, Sendable {
         }
     }
 
-    /// Slots the family can show legibly. Also the matrix's per-family maximum.
-    var capacity: Int {
-        switch self {
-        case .small: return 4
-        case .medium: return 6
-        case .large: return 12
-        }
-    }
-
     /// The smallest canvas iOS gives this family, from the 320 x 568 pt
     /// layout a 4.7 inch iPhone reaches with Display Zoom on. Layout is
     /// clamped against this rather than against the largest phone, so the
@@ -44,30 +35,12 @@ enum TileMode: Equatable, Sendable {
     /// Equal share of a grid, name centred.
     case tile
 
-    /// Space a name loses to the tile's own inset.
-    var inset: CGFloat {
-        switch self {
-        case .row: return 28
-        case .tile: return 12
-        }
-    }
-
     /// A wide short bar has room for two lines; a square tile has room for
     /// three, which is what lets a long name stay large.
     var lineLimit: Int {
         switch self {
         case .row: return 2
         case .tile: return 3
-        }
-    }
-
-    /// Rounded even when tiles are flush, because at zero gap the corner
-    /// notch is the only thing separating one tap target from the next, and
-    /// in accented mode every tile has the same fill.
-    var corner: CGFloat {
-        switch self {
-        case .row: return 16
-        case .tile: return 14
         }
     }
 }
@@ -77,121 +50,79 @@ struct BoardGrid: Sendable {
     let columns: Int
     let rows: Int
     let mode: TileMode
-    let gap: CGFloat
-    let padding: CGFloat
+    let layout: BoardLayoutValues
     let font: Font
-    let corners: InternalCorners
-    let cornerRadius: CGFloat
 
     static func resolve(
         count: Int,
         size: BoardSize,
-        density: Density,
         longestName: Int,
-        pattern: LayoutPattern = .auto,
-        corners: InternalCorners = .rounded
+        layout requestedLayout: BoardLayoutValues
     ) -> (grid: BoardGrid, visibleSlots: Int) {
         
         let requestedSlots = max(1, count)
-        let dims = layoutDimensions(for: requestedSlots, size: size, pattern: pattern)
-        let cols = dims.columns
-        let rows = dims.rows
+        let slots = min(requestedSlots, 12)
+        
+        let cols = requestedLayout.columns == 0 ? columnCount(for: slots, size: size) : requestedLayout.columns
+        let rows = Int(ceil(Double(slots) / Double(cols)))
         
         let visibleSlots = min(requestedSlots, cols * rows)
-        
         let mode: TileMode = cols == 1 && visibleSlots > 1 ? .row : .tile
 
-        // Only the vertical axis can run out of room, so that is the budget.
-        // Separation between tiles is spent first and outer padding gets the
-        // remainder, which keeps both non-decreasing as density rises: giving
-        // padding priority let a looser setting end up with a tighter board.
-        let slack = max(0, size.canvas.height - minimumTarget * CGFloat(rows))
-        let gap: CGFloat
-        let padding: CGFloat
-        if rows > 1 {
-            let gapBudget = min(density.gap * CGFloat(rows - 1), slack)
-            gap = gapBudget / CGFloat(rows - 1)
-            padding = min(density.padding, max(0, slack - gapBudget) / 2)
-        } else {
-            gap = density.gap
-            padding = min(density.padding, slack / 2)
+        var layout = requestedLayout
+        
+        func currentCell() -> CGSize {
+            let width = size.canvas.width - layout.marginX * 2 - layout.spacingX * CGFloat(max(0, cols - 1))
+            let height = size.canvas.height - layout.marginY * 2 - layout.spacingY * CGFloat(max(0, rows - 1))
+            return CGSize(
+                width: width / CGFloat(cols),
+                height: height / CGFloat(rows)
+            )
         }
-        let cell = cellSize(columns: cols, rows: rows, gap: gap, padding: padding, size: size)
 
-        let cornerRadius: CGFloat
-        switch corners {
-        case .rounded:
-            cornerRadius = density.cornerRadius
-        case .square:
-            cornerRadius = 4 // Very small rounded corner
-        case .sharp:
-            cornerRadius = 0 // Actual point
+        var cell = currentCell()
+
+        // Degradation order: spacing -> margin -> floor at 1pt
+        // 1. Reduce spacing toward 0
+        if cell.width < 1 && cols > 1 {
+            let neededTotal = (1 - cell.width) * CGFloat(cols)
+            let cut = min(layout.spacingX, neededTotal / CGFloat(cols - 1))
+            layout.spacingX -= cut
         }
+        if cell.height < 1 && rows > 1 {
+            let neededTotal = (1 - cell.height) * CGFloat(rows)
+            let cut = min(layout.spacingY, neededTotal / CGFloat(rows - 1))
+            layout.spacingY -= cut
+        }
+        cell = currentCell()
+
+        // 2. Reduce margin toward 0
+        if cell.width < 1 {
+            let neededTotal = (1 - cell.width) * CGFloat(cols)
+            let cut = min(layout.marginX, neededTotal / 2)
+            layout.marginX -= cut
+        }
+        if cell.height < 1 {
+            let neededTotal = (1 - cell.height) * CGFloat(rows)
+            let cut = min(layout.marginY, neededTotal / 2)
+            layout.marginY -= cut
+        }
+        cell = currentCell()
+
+        // 3. Floor at 1pt
+        cell.width = max(1, cell.width)
+        cell.height = max(1, cell.height)
+
+        let font = textStyle(cell: cell, mode: mode, longestName: longestName, layout: layout)
 
         let grid = BoardGrid(
             columns: cols,
             rows: rows,
             mode: mode,
-            gap: gap,
-            padding: padding,
-            font: textStyle(cell: cell, mode: mode, longestName: longestName),
-            corners: corners,
-            cornerRadius: cornerRadius
+            layout: layout,
+            font: font
         )
         return (grid, visibleSlots)
-    }
-
-    private static func layoutDimensions(for slots: Int, size: BoardSize, pattern: LayoutPattern) -> (columns: Int, rows: Int) {
-        func autoLayout() -> (Int, Int) {
-            let cols = columnCount(for: min(slots, size.capacity), size: size)
-            let rows = Int(ceil(Double(min(slots, size.capacity)) / Double(cols)))
-            return (cols, rows)
-        }
-
-        switch pattern {
-        case .auto:
-            return autoLayout()
-        case .singleHero:
-            return (1, 1)
-        case .verticalStack, .verticalList:
-            // Default 44pt target math strictly limits 141pt canvases to 3 rows.
-            // User explicitly requires 4 rows to be supported for vertical stacks.
-            let maxRows = max(4, Int(size.canvas.height / minimumTarget))
-            return (1, min(slots, maxRows))
-        case .horizontalStack, .horizontalStrip:
-            let maxCols = Int(size.canvas.width / minimumTarget)
-            return (min(slots, maxCols), 1)
-        case .gridMatrix:
-            if slots <= 1 { return (1, 1) }
-            let cols = balanced(slots)
-            let rows = Int(ceil(Double(slots) / Double(cols)))
-            let maxRows = Int(size.canvas.height / minimumTarget)
-            return (cols, min(rows, maxRows))
-        case .dualColumnGrid:
-            if slots <= 1 { return (1, 1) }
-            let cols = 2
-            let rows = Int(ceil(Double(slots) / Double(cols)))
-            let maxRows = Int(size.canvas.height / minimumTarget)
-            return (cols, min(rows, maxRows))
-        }
-    }
-
-    /// Apple's minimum comfortable touch target.
-    private static let minimumTarget: CGFloat = 44
-
-    private static func cellSize(
-        columns: Int,
-        rows: Int,
-        gap: CGFloat,
-        padding: CGFloat,
-        size: BoardSize
-    ) -> CGSize {
-        let width = size.canvas.width - padding * 2 - gap * CGFloat(columns - 1)
-        let height = size.canvas.height - padding * 2 - gap * CGFloat(rows - 1)
-        return CGSize(
-            width: max(1, width / CGFloat(columns)),
-            height: max(1, height / CGFloat(rows))
-        )
     }
 
     private static func columnCount(for slots: Int, size: BoardSize) -> Int {
@@ -236,8 +167,8 @@ struct BoardGrid: Sendable {
     /// only its own tile and the grid loses its only ordering principle.
     /// `minimumScaleFactor` in the view is then a safety net, not the
     /// mechanism.
-    private static func textStyle(cell: CGSize, mode: TileMode, longestName: Int) -> Font {
-        let width = max(1, cell.width - mode.inset)
+    private static func textStyle(cell: CGSize, mode: TileMode, longestName: Int, layout: BoardLayoutValues) -> Font {
+        let width = max(1, cell.width - layout.paddingX * 2)
         let characters = CGFloat(max(4, longestName))
         let lines = CGFloat(mode.lineLimit)
 
@@ -246,7 +177,7 @@ struct BoardGrid: Sendable {
             let needed = step.points * 0.55 * characters
             let used = min(lines, max(1, (needed / width).rounded(.up)))
             let fitsWidth = used <= lines
-            let fitsHeight = cell.height >= step.points * 1.25 * used + 6
+            let fitsHeight = (cell.height - layout.paddingY * 2) >= step.points * 1.25 * used + 6
             if fitsWidth && needed <= width * lines && fitsHeight {
                 return step.font
             }
