@@ -37,6 +37,10 @@ struct PresetEditorView: View {
                 .ignoresSafeArea()
             }
             
+            // Full-screen Immersive Blur
+            Rectangle()
+                .fill(.ultraThinMaterial)
+                .ignoresSafeArea()
             
             VStack(spacing: 0) {
                 ZStack {
@@ -45,12 +49,12 @@ struct PresetEditorView: View {
                 .frame(height: 360)
                 
                 Form {
-                    Section(header: header("Name")) {
+                    Section(header: Text("Name")) {
                         TextField("Preset Name", text: $preset.name)
                             .disabled(preset.id == BoardPresetStore.defaultPresetId)
                     }
                     
-                    Section(header: header("Preview Settings")) {
+                    Section(header: Text("Preview Settings")) {
                         Picker("Size", selection: $size) {
                             Text("Small").tag(BoardSize.small)
                             Text("Medium").tag(BoardSize.medium)
@@ -61,7 +65,7 @@ struct PresetEditorView: View {
                         Stepper("Populated Slots: \(slots)", value: $slots, in: 1...12)
                     }
                     
-                    Section(header: header("Layout")) {
+                    Section(header: Text("Layout")) {
                         Menu {
                             ForEach(DensityTemplate.all) { template in
                                 Button(template.name) {
@@ -88,7 +92,7 @@ struct PresetEditorView: View {
                         Stepper("Corner Radius: \(Int(preset.cornerRadius))", value: $preset.cornerRadius, in: 0...32)
                     }
                     
-                    Section(header: header("Background")) {
+                    Section(header: Text("Background")) {
                         Picker("Style", selection: $preset.background) {
                             ForEach(BackgroundStyle.allCases, id: \.self) { style in
                                 Text(style.displayName).tag(style)
@@ -154,8 +158,6 @@ struct PresetEditorView: View {
                     }
                 }
                 .scrollContentBackground(.hidden)
-                .listRowBackground(Color.clear)
-                .background(.regularMaterial)
             }
         }
         .navigationTitle(preset.name)
@@ -237,15 +239,6 @@ struct PresetEditorView: View {
         }
     }
     
-    @ViewBuilder
-    private func header(_ title: String) -> some View {
-        Text(title)
-            .font(.caption)
-            .fontWeight(.semibold)
-            .foregroundStyle(.secondary)
-            .padding(.bottom, 2)
-    }
-
     private func themeIcon(_ theme: Theme) -> some View {
         let colors = theme.spec.background
         return Group {
