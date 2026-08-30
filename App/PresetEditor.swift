@@ -43,6 +43,7 @@ struct PresetEditorView: View {
                     boardView
                 }
                 .frame(height: 360)
+                .padding(.top, 32)
                 
                 ScrollView {
                     VStack(spacing: 24) {
