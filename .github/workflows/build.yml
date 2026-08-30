@@ -28,28 +28,34 @@ jobs:
 
       - name: Build unsigned IPA
         run: |
+          # A tag names the version; anything else is not a release and says so.
+          VERSION="${GITHUB_REF_NAME#v}"
+          printf '%s' "$VERSION" | grep -Eq '^[0-9]+(\.[0-9]+)*$' || VERSION="0.0.0"
+
           xcodebuild clean archive \
-            -project HelloWorldApp.xcodeproj \
-            -scheme HelloWorldApp \
+            -project LauncherBoard.xcodeproj \
+            -scheme LauncherBoard \
             -destination "generic/platform=iOS" \
-            -archivePath HelloWorldApp.xcarchive \
+            -archivePath LauncherBoard.xcarchive \
+            MARKETING_VERSION="$VERSION" \
+            CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO
-            
+
           mkdir Payload
-          cp -R HelloWorldApp.xcarchive/Products/Applications/HelloWorldApp.app Payload/
-          zip -qr HelloWorldApp.ipa Payload
-          
+          cp -R LauncherBoard.xcarchive/Products/Applications/LauncherBoard.app Payload/
+          zip -qr LauncherBoard.ipa Payload
+
       - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
         if: ${{ !startsWith(github.ref, 'refs/tags/') }}
         with:
-          name: HelloWorldApp-IPA
-          path: HelloWorldApp.ipa
+          name: LauncherBoard-IPA
+          path: LauncherBoard.ipa
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: HelloWorldApp.ipa
+          files: LauncherBoard.ipa

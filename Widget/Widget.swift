@@ -1,161 +1,115 @@
-import WidgetKit
-import SwiftUI
+import Foundation
 import AppIntents
+import SwiftUI
+import WidgetKit
 
-struct LauncherWidgetConfigurationIntent: WidgetConfigurationIntent {
-    static var title: LocalizedStringResource = "Launcher Widget"
-    static var description: IntentDescription = .init("Widget that runs shortcuts or opens apps")
-
-    @Parameter(title: "First Action")
-    var shortcutOne: SystemShortcut?
-
-    @Parameter(title: "Second Action")
-    var shortcutTwo: SystemShortcut?
-
-    @Parameter(title: "Third Action")
-    var shortcutThree: SystemShortcut?
-}
-
-struct Provider: AppIntentTimelineProvider {
-    func placeholder(in context: Context) -> SimpleEntry {
-        SimpleEntry(date: Date(), configuration: LauncherWidgetConfigurationIntent())
-    }
-
-    func snapshot(for configuration: LauncherWidgetConfigurationIntent, in context: Context) async -> SimpleEntry {
-        SimpleEntry(date: Date(), configuration: configuration)
-    }
-    
-    func timeline(for configuration: LauncherWidgetConfigurationIntent, in context: Context) async -> Timeline<SimpleEntry> {
-        var entries: [SimpleEntry] = []
-        let currentDate = Date()
-        for hourOffset in 0 ..< 5 {
-            let entryDate = Calendar.current.date(byAdding: .hour, value: hourOffset, to: currentDate)!
-            let entry = SimpleEntry(date: entryDate, configuration: configuration)
-            entries.append(entry)
-        }
-        return Timeline(entries: entries, policy: .atEnd)
-    }
-}
-
-struct SimpleEntry: TimelineEntry {
+struct LauncherEntry: TimelineEntry {
     let date: Date
-    let configuration: LauncherWidgetConfigurationIntent
+    let configuration: LauncherIntent
+    /// Names to draw instead of shortcuts. The gallery card and the redacted
+    /// placeholder use it, because neither has a configuration to read.
+    let sample: [String]
 }
 
-struct HelloWorldWidgetEntryView : View {
-    var entry: Provider.Entry
-    
-    @Environment(\.widgetFamily) var family
+struct LauncherProvider: AppIntentTimelineProvider {
+    func placeholder(in context: Context) -> LauncherEntry {
+        LauncherEntry(date: Date(), configuration: LauncherIntent(), sample: BoardSample.names)
+    }
+
+    func snapshot(for configuration: LauncherIntent, in context: Context) async -> LauncherEntry {
+        // The widget gallery asks for a snapshot before anything is configured.
+        // Showing the empty state there would sell the widget as a blank card.
+        let sample = context.isPreview && configuration.slots.isEmpty ? BoardSample.names : []
+        return LauncherEntry(date: Date(), configuration: configuration, sample: sample)
+    }
+
+    func timeline(for configuration: LauncherIntent, in context: Context) async -> Timeline<LauncherEntry> {
+        // The board only changes when the widget is edited, which reloads the
+        // timeline anyway. One entry, never refreshed, spends no budget.
+        let entry = LauncherEntry(date: Date(), configuration: configuration, sample: [])
+        return Timeline(entries: [entry], policy: .never)
+    }
+}
+
+extension BoardSize {
+    init(family: WidgetFamily) {
+        switch family {
+        case .systemSmall: self = .small
+        case .systemMedium: self = .medium
+        default: self = .large
+        }
+    }
+}
+
+struct LauncherWidgetView: View {
+    let entry: LauncherEntry
+
+    @Environment(\.widgetFamily) private var family
+    @Environment(\.widgetRenderingMode) private var renderingMode
 
     var body: some View {
-        if family == .systemSmall {
-            VStack(spacing: 8) {
-                if let shortcut = entry.configuration.shortcutOne {
-                    Button(intent: RunSystemShortcutIntent(shortcut: shortcut)) {
-                        Text(shortcut.displayRepresentation.title)
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .background(Color(white: 0.2))
-                            .cornerRadius(8)
+        let size = BoardSize(family: family)
+        // Anything that is not full colour gets the same stripped-back
+        // treatment, so a future or Lock Screen mode never falls through.
+        let accented = renderingMode != .fullColor
+        let slots = Array(entry.configuration.slots.prefix(size.capacity))
+        let sample = Array(entry.sample.prefix(size.capacity))
+        let names = sample.isEmpty
+            ? slots.map { String(localized: $0.displayRepresentation.title) }
+            : sample
+        let grid = BoardGrid.resolve(
+            count: names.count,
+            size: size,
+            density: entry.configuration.density,
+            longestName: names.map(\.count).max() ?? 0
+        )
+
+        Group {
+            if names.isEmpty {
+                BoardEmptyState(theme: entry.configuration.theme, accented: accented)
+            } else {
+                BoardView(grid: grid, count: names.count) { index in
+                    if sample.isEmpty {
+                        Button(intent: RunSystemShortcutIntent(shortcut: slots[index])) {
+                            face(name: names[index], index: index, grid: grid, accented: accented)
+                        }
+                        .buttonStyle(.plain)
+                    } else {
+                        face(name: names[index], index: index, grid: grid, accented: accented)
                     }
-                    .buttonStyle(.plain)
-                } else {
-                    Text("Unconfigured")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(Color.gray)
-                        .cornerRadius(8)
-                }
-                
-                if let shortcut = entry.configuration.shortcutTwo {
-                    Button(intent: RunSystemShortcutIntent(shortcut: shortcut)) {
-                        Text(shortcut.displayRepresentation.title)
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .background(Color(white: 0.2))
-                            .cornerRadius(8)
-                    }
-                    .buttonStyle(.plain)
-                } else {
-                    Text("Unconfigured")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(Color.gray)
-                        .cornerRadius(8)
-                }
-                
-                if let shortcut = entry.configuration.shortcutThree {
-                    Button(intent: RunSystemShortcutIntent(shortcut: shortcut)) {
-                        Text(shortcut.displayRepresentation.title)
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .background(Color(white: 0.2))
-                            .cornerRadius(8)
-                    }
-                    .buttonStyle(.plain)
-                } else {
-                    Text("Unconfigured")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(Color.gray)
-                        .cornerRadius(8)
                 }
             }
-            .padding(.vertical, 8)
-            .padding(.horizontal, 4)
-            .containerBackground(for: .widget) {
-                Color.black
-            }
-        } else {
-            VStack {
-                Text(widgetGreeting)
-                    .font(.headline)
-                Text(entry.date, style: .time)
-                    .font(.subheadline)
-            }
-            .containerBackground(for: .widget) {
-                Color.blue.opacity(0.3)
-            }
+        }
+        .containerBackground(for: .widget) {
+            BoardBackground(theme: entry.configuration.theme, accented: accented)
         }
     }
-    
-    var widgetGreeting: String {
-        switch family {
-        case .systemMedium: return "Hello Medium Widget"
-        case .systemLarge: return "Hello Large Widget"
-        case .systemExtraLarge: return "Hello Giant Widget"
-        case .accessoryCircular: return "Hello Circular"
-        case .accessoryRectangular: return "Hello Rect"
-        case .accessoryInline: return "Hello Inline"
-        default: return "Hello Widget"
-        }
+
+    private func face(name: String, index: Int, grid: BoardGrid, accented: Bool) -> SlotFace {
+        let theme = entry.configuration.theme
+        return SlotFace(
+            name: name,
+            surface: theme.surface(at: index, accented: accented),
+            label: theme.labelColor(accented: accented),
+            mode: grid.mode,
+            font: grid.font
+        )
     }
 }
 
 @main
-struct HelloWorldWidget: Widget {
-    let kind: String = "HelloWorldWidget"
-
+struct LauncherBoardWidget: Widget {
     var body: some WidgetConfiguration {
-        AppIntentConfiguration(kind: kind, intent: LauncherWidgetConfigurationIntent.self, provider: Provider()) { entry in
-            HelloWorldWidgetEntryView(entry: entry)
+        AppIntentConfiguration(
+            kind: "LauncherBoard",
+            intent: LauncherIntent.self,
+            provider: LauncherProvider()
+        ) { entry in
+            LauncherWidgetView(entry: entry)
         }
-        .configurationDisplayName("Launcher Widget")
-        .description("A customizable 3-button launcher.")
-        .supportedFamilies([
-            .systemSmall,
-            .systemMedium,
-            .systemLarge,
-            .systemExtraLarge,
-            .accessoryCircular,
-            .accessoryRectangular,
-            .accessoryInline
-        ])
+        .configurationDisplayName("Launcher Board")
+        .description("Run your shortcuts from the Home Screen.")
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+        .contentMarginsDisabled()
     }
 }
