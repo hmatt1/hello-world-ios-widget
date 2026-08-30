@@ -1,5 +1,6 @@
 import SwiftUI
 import WidgetKit
+import PhotosUI
 
 @main
 struct LauncherBoardApp: App {
@@ -20,6 +21,11 @@ struct ControlPaneView: View {
     @State private var theme: Theme = .midnight
     @State private var density: Density = .compact
     @State private var corners: InternalCorners = .rounded
+    @State private var backgroundStyle: BackgroundStyle = .theme
+    @State private var widgetPosition: WidgetPosition = .topLeft
+    @State private var wallpaperItem: PhotosPickerItem?
+    
+    @ObservedObject private var wallpaperStore = WallpaperStore.shared
 
     /// Valid patterns change based on the selected widget family.
     var validPatterns: [LayoutPattern] {
@@ -47,6 +53,8 @@ struct ControlPaneView: View {
                     .animation(.default, value: theme)
                     .animation(.default, value: density)
                     .animation(.default, value: corners)
+                    .animation(.default, value: backgroundStyle)
+                    .animation(.default, value: widgetPosition)
             }
             .frame(height: 360)
             
@@ -73,13 +81,51 @@ struct ControlPaneView: View {
                     }
                 }
                 
-                Section(header: Text("Design")) {
-                    Picker("Theme", selection: $theme) {
-                        ForEach(Theme.allCases, id: \.self) { theme in
-                            Text(theme.displayName).tag(theme)
+                Section(header: Text("Background")) {
+                    Picker("Style", selection: $backgroundStyle) {
+                        ForEach(BackgroundStyle.allCases, id: \.self) { style in
+                            Text(style.displayName).tag(style)
                         }
                     }
                     
+                    if backgroundStyle == .theme {
+                        Picker("Theme", selection: $theme) {
+                            ForEach(Theme.allCases, id: \.self) { theme in
+                                Text(theme.displayName).tag(theme)
+                            }
+                        }
+                    }
+                    
+                    if backgroundStyle == .transparent {
+                        PhotosPicker(selection: $wallpaperItem, matching: .images) {
+                            HStack {
+                                Text("Upload Screenshot")
+                                Spacer()
+                                if wallpaperStore.image != nil {
+                                    Image(systemName: "checkmark.circle.fill").foregroundColor(.green)
+                                }
+                            }
+                        }
+                        .onChange(of: wallpaperItem) { _, newItem in
+                            Task {
+                                if let data = try? await newItem?.loadTransferable(type: Data.self),
+                                   let uiImage = UIImage(data: data) {
+                                    await MainActor.run {
+                                        wallpaperStore.save(image: uiImage, screenBounds: UIScreen.main.bounds.size)
+                                    }
+                                }
+                            }
+                        }
+                        
+                        Picker("Simulate Position", selection: $widgetPosition) {
+                            ForEach(WidgetPosition.allCases, id: \.self) { pos in
+                                Text(pos.displayName).tag(pos)
+                            }
+                        }
+                    }
+                }
+                
+                Section(header: Text("Design")) {
                     Picker("Density", selection: $density) {
                         ForEach(Density.allCases, id: \.self) { density in
                             Text(density.displayName).tag(density)
@@ -128,7 +174,15 @@ struct ControlPaneView: View {
             )
         }
         .frame(width: size.canvas.width, height: size.canvas.height)
-        .background { BoardBackground(theme: theme, accented: false) }
+        .background { 
+            BoardBackground(
+                theme: theme,
+                accented: false,
+                style: backgroundStyle,
+                position: widgetPosition,
+                family: size
+            ) 
+        }
         .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 26, style: .continuous)

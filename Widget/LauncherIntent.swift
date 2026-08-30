@@ -74,6 +74,40 @@ extension InternalCorners: AppEnum {
     }
 }
 
+extension BackgroundStyle: AppEnum {
+    static var typeDisplayRepresentation: TypeDisplayRepresentation {
+        TypeDisplayRepresentation(name: "Background Style")
+    }
+
+    static var caseDisplayRepresentations: [BackgroundStyle: DisplayRepresentation] {
+        [
+            .theme: DisplayRepresentation(title: "Theme (Solid)"),
+            .liquidGlass: DisplayRepresentation(title: "Liquid Glass"),
+            .transparent: DisplayRepresentation(title: "Transparent")
+        ]
+    }
+}
+
+extension WidgetPosition: AppEnum {
+    static var typeDisplayRepresentation: TypeDisplayRepresentation {
+        TypeDisplayRepresentation(name: "Widget Position")
+    }
+
+    static var caseDisplayRepresentations: [WidgetPosition: DisplayRepresentation] {
+        [
+            .topLeft: DisplayRepresentation(title: "Top Left"),
+            .topRight: DisplayRepresentation(title: "Top Right"),
+            .middleLeft: DisplayRepresentation(title: "Middle Left"),
+            .middleRight: DisplayRepresentation(title: "Middle Right"),
+            .bottomLeft: DisplayRepresentation(title: "Bottom Left"),
+            .bottomRight: DisplayRepresentation(title: "Bottom Right"),
+            .top: DisplayRepresentation(title: "Top"),
+            .middle: DisplayRepresentation(title: "Middle"),
+            .bottom: DisplayRepresentation(title: "Bottom")
+        ]
+    }
+}
+
 /// Fourteen rows: twelve shortcuts and two looks. The number of assigned
 /// shortcuts is the slot count, so no control can contradict another.
 struct LauncherIntent: WidgetConfigurationIntent {
@@ -130,6 +164,12 @@ struct LauncherIntent: WidgetConfigurationIntent {
 
     @Parameter(title: "Internal Corners", default: .rounded)
     var internalCorners: InternalCorners
+    
+    @Parameter(title: "Background", default: .theme)
+    var backgroundStyle: BackgroundStyle
+    
+    @Parameter(title: "Position (If Transparent)", default: .topLeft)
+    var widgetPosition: WidgetPosition
 
     /// Assigned shortcuts in slot order, holes closed.
     var slots: [SystemShortcut] {

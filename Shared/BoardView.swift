@@ -28,9 +28,31 @@ extension Theme {
 struct BoardBackground: View {
     let theme: Theme
     let accented: Bool
+    let style: BackgroundStyle
+    let position: WidgetPosition
+    let family: BoardSize
+
+    @ObservedObject private var store = WallpaperStore.shared
 
     var body: some View {
-        let colors = accented ? [] : theme.spec.background
+        if accented {
+            Color.clear
+        } else {
+            switch style {
+            case .theme:
+                themeBackground
+            case .liquidGlass:
+                Rectangle()
+                    .fill(.ultraThinMaterial)
+            case .transparent:
+                transparentBackground
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var themeBackground: some View {
+        let colors = theme.spec.background
         if colors.count >= 2 {
             LinearGradient(
                 colors: colors.map(\.color),
@@ -42,6 +64,52 @@ struct BoardBackground: View {
         } else {
             Color.clear
         }
+    }
+    
+    @ViewBuilder
+    private var transparentBackground: some View {
+        GeometryReader { proxy in
+            if let img = store.image, let screen = store.screenBounds {
+                Image(uiImage: img)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: screen.width, height: screen.height)
+                    .offset(cropOffset(for: position, widgetSize: proxy.size, screen: screen))
+            } else {
+                themeBackground
+            }
+        }
+    }
+    
+    private func cropOffset(for pos: WidgetPosition, widgetSize: CGSize, screen: CGSize) -> CGSize {
+        // Approximate the grid spacing based on actual device dimensions
+        let hMargin = (screen.width - (widgetSize.width * (family == .small ? 2 : 1))) / (family == .small ? 3 : 2)
+        let vGap = hMargin // Typically horizontal and vertical gaps are identical
+        let topMargin: CGFloat = screen.height >= 844 ? 76 : (screen.height >= 812 ? 60 : 47) // Rough safe area + padding
+        
+        var x: CGFloat = 0
+        var y: CGFloat = 0
+        
+        // Calculate X
+        switch pos {
+        case .topLeft, .middleLeft, .bottomLeft, .top, .middle, .bottom:
+            x = hMargin
+        case .topRight, .middleRight, .bottomRight:
+            x = screen.width - hMargin - widgetSize.width
+        }
+        
+        // Calculate Y
+        switch pos {
+        case .topLeft, .topRight, .top:
+            y = topMargin
+        case .middleLeft, .middleRight, .middle:
+            y = topMargin + widgetSize.height + vGap
+        case .bottomLeft, .bottomRight, .bottom:
+            y = topMargin + (widgetSize.height + vGap) * 2
+        }
+        
+        // Move image negatively so the target area falls under the widget frame (0,0)
+        return CGSize(width: -x, height: -y)
     }
 }
 

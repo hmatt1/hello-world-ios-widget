@@ -87,7 +87,13 @@ struct LauncherWidgetView: View {
             }
         }
         .containerBackground(for: .widget) {
-            BoardBackground(theme: entry.configuration.theme, accented: accented)
+            BoardBackground(
+                theme: entry.configuration.theme,
+                accented: accented,
+                style: entry.configuration.backgroundStyle,
+                position: entry.configuration.widgetPosition,
+                family: size
+            )
         }
     }
 
