@@ -40,25 +40,43 @@ struct ControlPaneView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Static Preview Window
-            ZStack {
-                Color(uiColor: .systemGroupedBackground)
+        ZStack {
+            // Immersive Background
+            if let img = wallpaperStore.image {
+                Image(uiImage: img)
+                    .resizable()
+                    .scaledToFill()
                     .ignoresSafeArea()
-                
-                board(theme)
-                    .animation(.default, value: size)
-                    .animation(.default, value: slots)
-                    .animation(.default, value: pattern)
-                    .animation(.default, value: theme)
-                    .animation(.default, value: density)
-                    .animation(.default, value: corners)
-                    .animation(.default, value: backgroundStyle)
-                    .animation(.default, value: widgetPosition)
+            } else {
+                LinearGradient(
+                    colors: [Color.blue.opacity(0.8), Color.purple.opacity(0.8)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
             }
-            .frame(height: 360)
             
-            // Control Pane
+            // Native iOS Widget Edit Blur
+            Rectangle()
+                .fill(.ultraThinMaterial)
+                .ignoresSafeArea()
+            
+            VStack(spacing: 0) {
+                // Static Preview Window
+                ZStack {
+                    board(theme)
+                        .animation(.default, value: size)
+                        .animation(.default, value: slots)
+                        .animation(.default, value: pattern)
+                        .animation(.default, value: theme)
+                        .animation(.default, value: density)
+                        .animation(.default, value: corners)
+                        .animation(.default, value: backgroundStyle)
+                        .animation(.default, value: widgetPosition)
+                }
+                .frame(height: 360)
+                
+                // Control Pane
             Form {
                 Section(header: Text("Widget Settings")) {
                     Picker("Family", selection: $size) {
@@ -149,7 +167,9 @@ struct ControlPaneView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
         }
+        } // Close ZStack
         // A tile shows the shortcut's own name, so a rename in Shortcuts has
         // to reach the widget. The timeline never refreshes on its own, and
         // opening this app is the only moment the product gets to ask.
