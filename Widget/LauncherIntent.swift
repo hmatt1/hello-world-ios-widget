@@ -28,8 +28,15 @@ extension Density: AppEnum {
     static var caseDisplayRepresentations: [Density: DisplayRepresentation] {
         [
             .edge: DisplayRepresentation(title: "Edge"),
+            .tight: DisplayRepresentation(title: "Tight"),
+            .snug: DisplayRepresentation(title: "Snug"),
             .compact: DisplayRepresentation(title: "Compact"),
-            .roomy: DisplayRepresentation(title: "Roomy")
+            .balanced: DisplayRepresentation(title: "Balanced"),
+            .airy: DisplayRepresentation(title: "Airy"),
+            .roomy: DisplayRepresentation(title: "Roomy"),
+            .spacious: DisplayRepresentation(title: "Spacious"),
+            .open: DisplayRepresentation(title: "Open"),
+            .floating: DisplayRepresentation(title: "Floating")
         ]
     }
 }
