@@ -154,7 +154,8 @@ struct PresetEditorView: View {
                     }
                 }
                 .scrollContentBackground(.hidden)
-                .listRowBackground(Color.clear.background(.regularMaterial))
+                .listRowBackground(Color.clear)
+                .background(.regularMaterial)
             }
         }
         .navigationTitle(preset.name)
@@ -241,12 +242,8 @@ struct PresetEditorView: View {
         Text(title)
             .font(.caption)
             .fontWeight(.semibold)
-            .foregroundStyle(.primary)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 4)
-            .background(.regularMaterial, in: Capsule())
-            .padding(.leading, -16) // Offset default Form inset
-            .padding(.bottom, 4)
+            .foregroundStyle(.secondary)
+            .padding(.bottom, 2)
     }
 
     private func themeIcon(_ theme: Theme) -> some View {
