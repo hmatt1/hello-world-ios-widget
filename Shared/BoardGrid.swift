@@ -154,7 +154,9 @@ struct BoardGrid: Sendable {
         case .singleHero:
             return (1, 1)
         case .verticalStack, .verticalList:
-            let maxRows = Int(size.canvas.height / minimumTarget)
+            // Default 44pt target math strictly limits 141pt canvases to 3 rows.
+            // User explicitly requires 4 rows to be supported for vertical stacks.
+            let maxRows = max(4, Int(size.canvas.height / minimumTarget))
             return (1, min(slots, maxRows))
         case .horizontalStack, .horizontalStrip:
             let maxCols = Int(size.canvas.width / minimumTarget)
