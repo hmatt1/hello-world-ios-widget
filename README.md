@@ -97,6 +97,16 @@ Tools/verify-layout.py   re-derives the layout arithmetic and checks it
 
 `Shared/` never imports AppIntents. `BoardView` takes a tile builder, so the widget wraps each tile in `Button(intent:)` and the app renders the same `SlotFace` inert.
 
+## Development Lessons Learned
+
+While building this widget, we encountered and resolved several strict Apple requirements for iOS 27 widgets:
+
+1. **App Extensions Must be Embedded:** Widgets must be explicitly embedded into the main app for them to be signed and installed properly via tools like Sideloadly. This requires the `embed: true` flag in the `project.yml` dependencies.
+2. **Synchronized Version Strings:** Apple strictly mandates that App Extensions share the exact same `CFBundleVersion` and `CFBundleShortVersionString` as their parent App. Our `project.yml` sets these dynamically using Xcode variables `$(CURRENT_PROJECT_VERSION)` and `$(MARKETING_VERSION)`, which are injected by the GitHub Action at compile time.
+3. **Globally Unique Bundle Identifiers:** Bundle IDs must be globally unique to bypass Apple's free-tier signing restrictions (e.g., `com.hmatt1.launcherboard` and `com.hmatt1.launcherboard.Widget`).
+4. **Xcode 27 Cloud Compilation:** iOS 27 features like `RunSystemShortcutIntent` require the Xcode 27 SDK. Our GitHub Action uses `runs-on: xcode-27` to ensure the cloud compiler recognizes these new APIs.
+5. **Widget Intent Constraints:** The iOS 27 `RunSystemShortcutIntent` is only valid when explicitly passed into a `Button(intent:)` initializer within the widget's view.
+
 ## License
 
 MIT. Take it, change it, ship it.
