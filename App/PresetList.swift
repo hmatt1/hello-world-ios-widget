@@ -2,24 +2,40 @@ import SwiftUI
 
 struct PresetListView: View {
     @ObservedObject var store = BoardPresetStore.shared
+    @Binding var selectedId: String
+    @Binding var isPresented: Bool
     
     var body: some View {
         NavigationStack {
             List {
                 ForEach(store.presets) { preset in
-                    NavigationLink(destination: PresetEditorView(presetId: preset.id)) {
-                        VStack(alignment: .leading) {
-                            Text(preset.name)
-                                .font(.headline)
-                            Text(preset.id == BoardPresetStore.defaultPresetId ? "Built-in" : "Custom")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
+                    Button {
+                        selectedId = preset.id.uuidString
+                        isPresented = false
+                    } label: {
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text(preset.name)
+                                    .font(.headline)
+                                    .foregroundColor(.primary)
+                                Text(preset.id == BoardPresetStore.defaultPresetId ? "Built-in" : "Custom")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            if selectedId == preset.id.uuidString {
+                                Image(systemName: "checkmark")
+                                    .foregroundColor(.blue)
+                            }
                         }
                     }
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         if preset.id != BoardPresetStore.defaultPresetId {
                             Button(role: .destructive) {
                                 store.delete(id: preset.id)
+                                if selectedId == preset.id.uuidString {
+                                    selectedId = BoardPresetStore.defaultPresetId.uuidString
+                                }
                             } label: {
                                 Label("Delete", systemImage: "trash")
                             }
@@ -36,13 +52,21 @@ struct PresetListView: View {
                 .onMove(perform: store.reorder)
             }
             .navigationTitle("Presets")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Done") {
+                        isPresented = false
+                    }
+                }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     EditButton()
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
-                        _ = store.create(name: "New Preset")
+                        let newPreset = store.create(name: "New Preset")
+                        selectedId = newPreset.id.uuidString
+                        isPresented = false
                     }) {
                         Image(systemName: "plus")
                     }
