@@ -84,6 +84,7 @@ struct ControlPaneView: View {
                             Text(family.displayName).tag(family)
                         }
                     }
+                    .pickerStyle(.segmented)
                     .onChange(of: size) { _, newSize in
                         if !validPatterns.contains(pattern) {
                             pattern = .auto
@@ -165,6 +166,7 @@ struct ControlPaneView: View {
                             Text(corner.displayName).tag(corner)
                         }
                     }
+                    .pickerStyle(.segmented)
                 }
             }
             .scrollContentBackground(.hidden)
