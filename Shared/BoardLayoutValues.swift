@@ -1,7 +1,7 @@
 import Foundation
 import CoreGraphics
 
-public struct BoardLayoutValues: Codable, Sendable, Equatable {
+public struct BoardLayoutValues: Codable, Sendable, Equatable, Hashable {
     public var columns: Int
     public var marginX: CGFloat
     public var marginY: CGFloat

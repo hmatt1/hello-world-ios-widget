@@ -36,7 +36,7 @@ public class BoardPresetStore: ObservableObject {
         presets = BoardPresetStore.loadRaw()
     }
     
-    public static func loadRaw() -> [BoardPreset] {
+    public static nonisolated func loadRaw() -> [BoardPreset] {
         let defaults = UserDefaults(suiteName: "group.com.hmatt1.launcherboard")
         guard let data = defaults?.data(forKey: "board_presets"),
               let loaded = try? JSONDecoder().decode([BoardPreset].self, from: data),
@@ -50,7 +50,7 @@ public class BoardPresetStore: ObservableObject {
         return loaded
     }
     
-    public static func loadPreset(id: UUID) -> BoardPreset {
+    public static nonisolated func loadPreset(id: UUID) -> BoardPreset {
         let all = loadRaw()
         return all.first { $0.id == id } ?? all.first { $0.id == defaultPresetId } ?? createDefaultPreset()
     }
@@ -65,7 +65,7 @@ public class BoardPresetStore: ObservableObject {
         }
     }
     
-    public static func createDefaultPreset() -> BoardPreset {
+    public static nonisolated func createDefaultPreset() -> BoardPreset {
         let template = DensityTemplate.all.first { $0.id == "compact" }!.layout
         return BoardPreset(
             id: defaultPresetId,

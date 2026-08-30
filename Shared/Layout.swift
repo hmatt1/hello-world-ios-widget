@@ -3,7 +3,7 @@ import SwiftUI
 
 
 
-enum BackgroundStyle: String, CaseIterable, Sendable {
+public enum BackgroundStyle: String, Codable, CaseIterable, Sendable {
     case theme
     case liquidGlass
     case glassTiles

@@ -179,9 +179,9 @@ struct BoardView<Tile: View>: View {
     }
 
     var body: some View {
-        VStack(spacing: grid.gap) {
+        VStack(spacing: grid.layout.spacingY) {
             ForEach(0..<grid.rows, id: \.self) { row in
-                HStack(spacing: grid.gap) {
+                HStack(spacing: grid.layout.spacingX) {
                     ForEach(0..<grid.columns, id: \.self) { column in
                         let index = row * grid.columns + column
                         if index < count {
@@ -195,7 +195,8 @@ struct BoardView<Tile: View>: View {
                 }
             }
         }
-        .padding(grid.padding)
+        .padding(.horizontal, grid.layout.marginX)
+        .padding(.vertical, grid.layout.marginY)
     }
 }
 

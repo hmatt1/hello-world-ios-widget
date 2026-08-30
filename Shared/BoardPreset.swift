@@ -71,6 +71,24 @@ public struct BoardPreset: Codable, Sendable, Identifiable, Equatable {
         bgOffsetY = try container.decodeIfPresent(CGFloat.self, forKey: .bgOffsetY) ?? 0
     }
 
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(columns, forKey: .columns)
+        try container.encode(marginX, forKey: .marginX)
+        try container.encode(marginY, forKey: .marginY)
+        try container.encode(spacingX, forKey: .spacingX)
+        try container.encode(spacingY, forKey: .spacingY)
+        try container.encode(paddingX, forKey: .paddingX)
+        try container.encode(paddingY, forKey: .paddingY)
+        try container.encode(cornerRadius, forKey: .cornerRadius)
+        try container.encode(theme, forKey: .theme)
+        try container.encode(background, forKey: .background)
+        try container.encode(bgOffsetX, forKey: .bgOffsetX)
+        try container.encode(bgOffsetY, forKey: .bgOffsetY)
+    }
+
     public var layoutValues: BoardLayoutValues {
         BoardLayoutValues(
             columns: columns,

@@ -29,7 +29,7 @@ struct ThemeSpec: Sendable {
 }
 
 /// Five looked-at combinations, in place of a combinatorial style matrix.
-enum Theme: String, CaseIterable, Sendable {
+public enum Theme: String, Codable, CaseIterable, Sendable {
     case ink
     case paper
     case midnight
