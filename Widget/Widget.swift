@@ -52,17 +52,23 @@ struct LauncherWidgetView: View {
         // Anything that is not full colour gets the same stripped-back
         // treatment, so a future or Lock Screen mode never falls through.
         let accented = renderingMode != .fullColor
-        let slots = Array(entry.configuration.slots.prefix(size.capacity))
-        let sample = Array(entry.sample.prefix(size.capacity))
-        let names = sample.isEmpty
+        let slots = entry.configuration.slots
+        let sample = entry.sample
+        let rawNames = sample.isEmpty
             ? slots.map { String(localized: $0.displayRepresentation.title) }
             : sample
-        let grid = BoardGrid.resolve(
-            count: names.count,
+        
+        let resolved = BoardGrid.resolve(
+            count: rawNames.count,
             size: size,
             density: entry.configuration.density,
-            longestName: names.map(\.count).max() ?? 0
+            longestName: rawNames.map(\.count).max() ?? 0,
+            pattern: entry.configuration.layoutPattern,
+            corners: entry.configuration.internalCorners
         )
+        
+        let grid = resolved.grid
+        let names = Array(rawNames.prefix(resolved.visibleSlots))
 
         Group {
             if names.isEmpty {
@@ -92,7 +98,8 @@ struct LauncherWidgetView: View {
             surface: theme.surface(at: index, accented: accented),
             label: theme.labelColor(accented: accented),
             mode: grid.mode,
-            font: grid.font
+            font: grid.font,
+            corners: grid.corners
         )
     }
 }

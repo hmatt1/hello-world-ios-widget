@@ -80,19 +80,25 @@ struct BoardGrid: Sendable {
     let gap: CGFloat
     let padding: CGFloat
     let font: Font
+    let corners: InternalCorners
 
-    /// Structure comes from the family and the number of shortcuts. Every
-    /// arrangement this can produce leaves each tile at least 44pt tall, so no
-    /// shortcut ever sits behind a target smaller than a finger.
-    ///
-    /// `longestName` is the character count of the longest name the board will
-    /// hold. One size is chosen for the whole board from it, so every tile
-    /// reads at the same size instead of each one shrinking on its own.
-    static func resolve(count: Int, size: BoardSize, density: Density, longestName: Int) -> BoardGrid {
-        let slots = max(1, min(count, size.capacity))
-        let cols = columnCount(for: slots, size: size)
-        let rows = Int(ceil(Double(slots) / Double(cols)))
-        let mode: TileMode = cols == 1 && slots > 1 ? .row : .tile
+    static func resolve(
+        count: Int,
+        size: BoardSize,
+        density: Density,
+        longestName: Int,
+        pattern: LayoutPattern = .auto,
+        corners: InternalCorners = .rounded
+    ) -> (grid: BoardGrid, visibleSlots: Int) {
+        
+        let requestedSlots = max(1, count)
+        let dims = layoutDimensions(for: requestedSlots, size: size, pattern: pattern)
+        let cols = dims.columns
+        let rows = dims.rows
+        
+        let visibleSlots = min(requestedSlots, cols * rows)
+        
+        let mode: TileMode = cols == 1 && visibleSlots > 1 ? .row : .tile
 
         // Only the vertical axis can run out of room, so that is the budget.
         // Separation between tiles is spent first and outer padding gets the
@@ -111,14 +117,49 @@ struct BoardGrid: Sendable {
         }
         let cell = cellSize(columns: cols, rows: rows, gap: gap, padding: padding, size: size)
 
-        return BoardGrid(
+        let grid = BoardGrid(
             columns: cols,
             rows: rows,
             mode: mode,
             gap: gap,
             padding: padding,
-            font: textStyle(cell: cell, mode: mode, longestName: longestName)
+            font: textStyle(cell: cell, mode: mode, longestName: longestName),
+            corners: corners
         )
+        return (grid, visibleSlots)
+    }
+
+    private static func layoutDimensions(for slots: Int, size: BoardSize, pattern: LayoutPattern) -> (columns: Int, rows: Int) {
+        func autoLayout() -> (Int, Int) {
+            let cols = columnCount(for: min(slots, size.capacity), size: size)
+            let rows = Int(ceil(Double(min(slots, size.capacity)) / Double(cols)))
+            return (cols, rows)
+        }
+
+        switch pattern {
+        case .auto:
+            return autoLayout()
+        case .singleHero:
+            return (1, 1)
+        case .verticalStack, .verticalList:
+            let maxRows = Int(size.canvas.height / minimumTarget)
+            return (1, min(slots, maxRows))
+        case .horizontalStack, .horizontalStrip:
+            let maxCols = Int(size.canvas.width / minimumTarget)
+            return (min(slots, maxCols), 1)
+        case .gridMatrix:
+            if slots <= 1 { return (1, 1) }
+            let cols = balanced(slots)
+            let rows = Int(ceil(Double(slots) / Double(cols)))
+            let maxRows = Int(size.canvas.height / minimumTarget)
+            return (cols, min(rows, maxRows))
+        case .dualColumnGrid:
+            if slots <= 1 { return (1, 1) }
+            let cols = 2
+            let rows = Int(ceil(Double(slots) / Double(cols)))
+            let maxRows = Int(size.canvas.height / minimumTarget)
+            return (cols, min(rows, maxRows))
+        }
     }
 
     /// Apple's minimum comfortable touch target.

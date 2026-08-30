@@ -52,6 +52,7 @@ struct SlotFace: View {
     let label: Color
     let mode: TileMode
     let font: Font
+    let corners: InternalCorners
 
     var body: some View {
         Text(name)
@@ -75,7 +76,7 @@ struct SlotFace: View {
                 // every tile carries the same fill, so this line is the only
                 // thing marking where one tap target ends. The target itself
                 // is the full frame and is unaffected.
-                RoundedRectangle(cornerRadius: mode.corner, style: .continuous)
+                RoundedRectangle(cornerRadius: corners == .square ? 0 : mode.corner, style: .continuous)
                     .fill(surface)
                     .padding(0.5)
             }

@@ -34,6 +34,38 @@ extension Density: AppEnum {
     }
 }
 
+extension LayoutPattern: AppEnum {
+    static var typeDisplayRepresentation: TypeDisplayRepresentation {
+        TypeDisplayRepresentation(name: "Layout Pattern")
+    }
+
+    static var caseDisplayRepresentations: [LayoutPattern: DisplayRepresentation] {
+        [
+            .auto: DisplayRepresentation(title: "Auto (Best Fit)"),
+            .singleHero: DisplayRepresentation(title: "Single Hero"),
+            .verticalStack: DisplayRepresentation(title: "Vertical Stack"),
+            .horizontalStack: DisplayRepresentation(title: "Horizontal Stack"),
+            .gridMatrix: DisplayRepresentation(title: "Grid Matrix"),
+            .horizontalStrip: DisplayRepresentation(title: "Horizontal Strip"),
+            .verticalList: DisplayRepresentation(title: "Vertical List"),
+            .dualColumnGrid: DisplayRepresentation(title: "Dual Column Grid")
+        ]
+    }
+}
+
+extension InternalCorners: AppEnum {
+    static var typeDisplayRepresentation: TypeDisplayRepresentation {
+        TypeDisplayRepresentation(name: "Internal Corners")
+    }
+
+    static var caseDisplayRepresentations: [InternalCorners: DisplayRepresentation] {
+        [
+            .rounded: DisplayRepresentation(title: "Rounded"),
+            .square: DisplayRepresentation(title: "Square")
+        ]
+    }
+}
+
 /// Fourteen rows: twelve shortcuts and two looks. The number of assigned
 /// shortcuts is the slot count, so no control can contradict another.
 struct LauncherIntent: WidgetConfigurationIntent {
@@ -79,11 +111,17 @@ struct LauncherIntent: WidgetConfigurationIntent {
     @Parameter(title: "12")
     var shortcut12: SystemShortcut?
 
+    @Parameter(title: "Layout Pattern", default: .auto)
+    var layoutPattern: LayoutPattern
+
     @Parameter(title: "Theme", default: .midnight)
     var theme: Theme
 
     @Parameter(title: "Density", default: .compact)
     var density: Density
+
+    @Parameter(title: "Internal Corners", default: .rounded)
+    var internalCorners: InternalCorners
 
     /// Assigned shortcuts in slot order, holes closed.
     var slots: [SystemShortcut] {
