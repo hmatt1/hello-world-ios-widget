@@ -178,6 +178,9 @@ struct PresetEditorView: View {
         }
         .navigationTitle(preset.name)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.visible, for: .navigationBar)
+        .toolbarBackground(.black, for: .navigationBar)
+        .toolbarColorScheme(.dark, for: .navigationBar)
         .onChange(of: preset) { _, newPreset in
             store.update(newPreset)
             WidgetCenter.shared.reloadAllTimelines()
