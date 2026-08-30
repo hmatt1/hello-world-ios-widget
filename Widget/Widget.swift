@@ -99,7 +99,7 @@ struct LauncherWidgetView: View {
             label: theme.labelColor(accented: accented),
             mode: grid.mode,
             font: grid.font,
-            corners: grid.corners
+            cornerRadius: grid.cornerRadius
         )
     }
 }

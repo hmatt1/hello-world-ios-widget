@@ -81,6 +81,7 @@ struct BoardGrid: Sendable {
     let padding: CGFloat
     let font: Font
     let corners: InternalCorners
+    let cornerRadius: CGFloat
 
     static func resolve(
         count: Int,
@@ -117,6 +118,16 @@ struct BoardGrid: Sendable {
         }
         let cell = cellSize(columns: cols, rows: rows, gap: gap, padding: padding, size: size)
 
+        let cornerRadius: CGFloat
+        switch corners {
+        case .rounded:
+            cornerRadius = density.cornerRadius
+        case .square:
+            cornerRadius = 4 // Very small rounded corner
+        case .sharp:
+            cornerRadius = 0 // Actual point
+        }
+
         let grid = BoardGrid(
             columns: cols,
             rows: rows,
@@ -124,7 +135,8 @@ struct BoardGrid: Sendable {
             gap: gap,
             padding: padding,
             font: textStyle(cell: cell, mode: mode, longestName: longestName),
-            corners: corners
+            corners: corners,
+            cornerRadius: cornerRadius
         )
         return (grid, visibleSlots)
     }

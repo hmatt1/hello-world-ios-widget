@@ -61,7 +61,8 @@ extension InternalCorners: AppEnum {
     static var caseDisplayRepresentations: [InternalCorners: DisplayRepresentation] {
         [
             .rounded: DisplayRepresentation(title: "Rounded"),
-            .square: DisplayRepresentation(title: "Square")
+            .square: DisplayRepresentation(title: "Square"),
+            .sharp: DisplayRepresentation(title: "Sharp")
         ]
     }
 }

@@ -124,7 +124,7 @@ struct ControlPaneView: View {
                 label: theme.labelColor(accented: false),
                 mode: grid.mode,
                 font: grid.font,
-                corners: grid.corners
+                cornerRadius: grid.cornerRadius
             )
         }
         .frame(width: size.canvas.width, height: size.canvas.height)

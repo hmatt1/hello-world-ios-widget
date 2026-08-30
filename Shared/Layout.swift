@@ -28,11 +28,13 @@ enum LayoutPattern: String, CaseIterable, Sendable {
 enum InternalCorners: String, CaseIterable, Sendable {
     case rounded
     case square
+    case sharp
     
     var displayName: String {
         switch self {
         case .rounded: return "Rounded"
         case .square: return "Square"
+        case .sharp: return "Sharp"
         }
     }
 }

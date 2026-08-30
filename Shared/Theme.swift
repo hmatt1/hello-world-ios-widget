@@ -111,4 +111,12 @@ enum Density: String, CaseIterable, Sendable {
         case .roomy: return 12
         }
     }
+
+    var cornerRadius: CGFloat {
+        switch self {
+        case .edge: return 8
+        case .compact: return 14
+        case .roomy: return 18
+        }
+    }
 }
