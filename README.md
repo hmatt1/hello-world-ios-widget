@@ -67,7 +67,7 @@ open LauncherBoard.xcodeproj
 
 Set your Personal Team under **Signing & Capabilities** for both targets, enable **Developer Mode** under **Settings > Privacy & Security** on the iPhone, then run. The generated project carries no signing overrides, so this works; the unsigned build for release passes them on the `xcodebuild` command line instead.
 
-From Windows, download `LauncherBoard.ipa` from **Releases** and sideload it with [Sideloadly](https://sideloadly.io/) using a free Apple ID. Enable **Developer Mode** on the iPhone first, then trust the developer under **Settings > General > VPN & Device Management**. Free-signed apps expire after seven days; Sideloadly's Wi-Fi auto refresh renews them.
+From Windows, download `LauncherBoard.ipa` from **Releases** and sideload it using [Impactor](https://impactor.claration.dev/). Enable **Developer Mode** on the iPhone first, then trust the developer under **Settings > General > VPN & Device Management**. Free-signed apps expire after seven days, so you will need to re-sideload weekly unless you use a paid developer account.
 
 Tag a release to publish a new build:
 
