@@ -2,6 +2,56 @@ import SwiftUI
 import WidgetKit
 import PhotosUI
 
+struct CustomStepper<V: Strideable & Comparable>: View where V.Stride: SignedNumeric {
+    let title: String
+    @Binding var value: V
+    let range: ClosedRange<V>
+    let step: V.Stride
+    let stringValue: String
+    
+    var body: some View {
+        HStack {
+            Text(title)
+            Spacer()
+            Button {
+                let newValue = value.advanced(by: -step)
+                if newValue >= range.lowerBound {
+                    value = newValue
+                } else {
+                    value = range.lowerBound
+                }
+            } label: {
+                Image(systemName: "minus")
+                    .frame(width: 32, height: 32)
+                    .background(Color.secondary.opacity(0.15))
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                    .foregroundColor(.primary)
+            }
+            .buttonStyle(.borderless)
+            
+            Text(stringValue)
+                .font(.body.monospacedDigit())
+                .frame(minWidth: 36, alignment: .center)
+            
+            Button {
+                let newValue = value.advanced(by: step)
+                if newValue <= range.upperBound {
+                    value = newValue
+                } else {
+                    value = range.upperBound
+                }
+            } label: {
+                Image(systemName: "plus")
+                    .frame(width: 32, height: 32)
+                    .background(Color.secondary.opacity(0.15))
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                    .foregroundColor(.primary)
+            }
+            .buttonStyle(.borderless)
+        }
+    }
+}
+
 struct PresetEditorView: View {
     let presetId: UUID
     @ObservedObject var store = BoardPresetStore.shared
@@ -15,8 +65,11 @@ struct PresetEditorView: View {
     
     @ObservedObject private var wallpaperStore = WallpaperStore.shared
     
-    init(presetId: UUID) {
+    var onShowPresets: () -> Void
+    
+    init(presetId: UUID, onShowPresets: @escaping () -> Void = {}) {
         self.presetId = presetId
+        self.onShowPresets = onShowPresets
         let p = BoardPresetStore.shared.presets.first(where: { $0.id == presetId }) ?? BoardPresetStore.loadRaw().first!
         _preset = State(initialValue: p)
     }
@@ -32,6 +85,18 @@ struct PresetEditorView: View {
             .onTapGesture {
                 UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
             }
+            .overlay(alignment: .bottomLeading) {
+                Button(action: onShowPresets) {
+                    Image(systemName: "square.stack.3d.up.fill")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundColor(.white)
+                        .frame(width: 44, height: 44)
+                        .background(.ultraThinMaterial, in: Circle())
+                        .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+                }
+                .padding(.leading, 16)
+                .padding(.bottom, 8)
+            }
                 Form {
                     Section("Preset") {
                         TextField("Preset Name", text: $preset.name)
@@ -46,7 +111,7 @@ struct PresetEditorView: View {
                         }
                         .pickerStyle(.segmented)
                         
-                        Stepper("Preview Slots: \(slots)", value: $slots, in: 1...12)
+                        CustomStepper(title: "Preview Slots", value: $slots, range: 1...12, step: 1, stringValue: "\(slots)")
                     }
                     
                     Section("Layout") {
@@ -69,16 +134,16 @@ struct PresetEditorView: View {
                             }
                         }
                         
-                        Stepper(preset.columns == 0 ? "Columns: Auto" : "Columns: \(preset.columns)", value: $preset.columns, in: 0...12)
+                        CustomStepper(title: "Columns", value: $preset.columns, range: 0...12, step: 1, stringValue: preset.columns == 0 ? "Auto" : "\(preset.columns)")
                         
-                        Stepper("Margin X: \(Int(preset.marginX))", value: $preset.marginX, in: 0...40)
-                        Stepper("Margin Y: \(Int(preset.marginY))", value: $preset.marginY, in: 0...40)
-                        Stepper("Spacing X: \(Int(preset.spacingX))", value: $preset.spacingX, in: 0...40)
-                        Stepper("Spacing Y: \(Int(preset.spacingY))", value: $preset.spacingY, in: 0...40)
-                        Stepper("Padding X: \(Int(preset.paddingX))", value: $preset.paddingX, in: 0...40)
-                        Stepper("Padding Y: \(Int(preset.paddingY))", value: $preset.paddingY, in: 0...40)
-                        Stepper("Inner Corners: \(Int(preset.cornerRadius))", value: $preset.cornerRadius, in: 0...32)
-                        Stepper("Outer Corners: \(Int(preset.outerCornerRadius))", value: $preset.outerCornerRadius, in: 0...32)
+                        CustomStepper(title: "Margin X", value: $preset.marginX, range: 0...40, step: 1, stringValue: "\(Int(preset.marginX))")
+                        CustomStepper(title: "Margin Y", value: $preset.marginY, range: 0...40, step: 1, stringValue: "\(Int(preset.marginY))")
+                        CustomStepper(title: "Spacing X", value: $preset.spacingX, range: 0...40, step: 1, stringValue: "\(Int(preset.spacingX))")
+                        CustomStepper(title: "Spacing Y", value: $preset.spacingY, range: 0...40, step: 1, stringValue: "\(Int(preset.spacingY))")
+                        CustomStepper(title: "Padding X", value: $preset.paddingX, range: 0...40, step: 1, stringValue: "\(Int(preset.paddingX))")
+                        CustomStepper(title: "Padding Y", value: $preset.paddingY, range: 0...40, step: 1, stringValue: "\(Int(preset.paddingY))")
+                        CustomStepper(title: "Inner Corners", value: $preset.cornerRadius, range: 0...32, step: 1, stringValue: "\(Int(preset.cornerRadius))")
+                        CustomStepper(title: "Outer Corners", value: $preset.outerCornerRadius, range: 0...32, step: 1, stringValue: "\(Int(preset.outerCornerRadius))")
                     }
                     
                     Section("Background") {

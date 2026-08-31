@@ -18,24 +18,12 @@ struct PresetEditorWrapper: View {
     
     var body: some View {
         let presetId = UUID(uuidString: lastEditedId) ?? BoardPresetStore.loadRaw().first!.id
-        PresetEditorView(presetId: presetId)
-            .id(presetId.uuidString) // Force recreate when switching presets
-            .overlay(alignment: .topLeading) {
-                Button {
-                    showingPresets = true
-                } label: {
-                    Image(systemName: "list.bullet")
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundColor(.white)
-                        .frame(width: 44, height: 44)
-                        .background(.ultraThinMaterial, in: Circle())
-                        .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
-                }
-                .padding(.leading, 16)
-                .padding(.top, 16)
-            }
-            .sheet(isPresented: $showingPresets) {
-                PresetListView(selectedId: $lastEditedId, isPresented: $showingPresets)
-            }
+        PresetEditorView(presetId: presetId) {
+            showingPresets = true
+        }
+        .id(presetId.uuidString) // Force recreate when switching presets
+        .sheet(isPresented: $showingPresets) {
+            PresetListView(selectedId: $lastEditedId, isPresented: $showingPresets)
+        }
     }
 }
