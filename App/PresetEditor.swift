@@ -28,9 +28,14 @@ struct PresetEditorView: View {
             }
             .frame(height: size.canvas.height + 60)
             .animation(.spring(), value: size)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+            }
                 Form {
                     Section("Preset") {
                         TextField("Preset Name", text: $preset.name)
+                            .submitLabel(.done)
                     }
                     
                     Section("Preview") {
@@ -127,7 +132,8 @@ struct PresetEditorView: View {
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
                 .listRowBackground(Color.clear)
-                .background(.regularMaterial)
+                .background(.regularMaterial, ignoresSafeAreaEdges: .bottom)
+                .scrollDismissesKeyboard(.interactively)
         }
         .background {
             LinearGradient(
