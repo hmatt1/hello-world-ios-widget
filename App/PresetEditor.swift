@@ -64,7 +64,7 @@ struct PresetEditorView: View {
     @State private var widgetPosition: WidgetPosition = .topLeft
     
     @ObservedObject private var wallpaperStore = WallpaperStore.shared
-    @State private var showingAddWidgetAlert = false
+    
     var onShowPresets: () -> Void
     
     init(presetId: UUID, onShowPresets: @escaping () -> Void = {}) {
@@ -96,18 +96,6 @@ struct PresetEditorView: View {
                         .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
                 }
                 .padding(.leading, 16)
-                .padding(.bottom, 8)
-            }
-            .overlay(alignment: .bottomTrailing) {
-                Button(action: { showingAddWidgetAlert = true }) {
-                    Image(systemName: "plus")
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundColor(.white)
-                        .frame(width: 44, height: 44)
-                        .background(.ultraThinMaterial, in: Circle())
-                        .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
-                }
-                .padding(.trailing, 16)
                 .padding(.bottom, 8)
             }
                 Form {
@@ -212,11 +200,6 @@ struct PresetEditorView: View {
                 .listRowBackground(Color.clear)
                 .background(.regularMaterial, ignoresSafeAreaEdges: .bottom)
                 .scrollDismissesKeyboard(.interactively)
-        }
-        .alert("Add to Home Screen", isPresented: $showingAddWidgetAlert) {
-            Button("Got It", role: .cancel) { }
-        } message: {
-            Text("Apple doesn't allow apps to add widgets automatically. To add this widget, go to your Home Screen, long-press empty space, tap '+', and search for 'Launcher Board'.\n\nChoose the \(size.displayName) size. Your current preset is already saved as the default!")
         }
         .background {
             LinearGradient(
