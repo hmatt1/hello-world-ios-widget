@@ -61,9 +61,10 @@ public class BoardPresetStore: ObservableObject {
     }
     
     public static nonisolated func createDefaultPresets() -> [BoardPreset] {
-        return DensityTemplate.all.map { template in
-            BoardPreset(
-                id: UUID(),
+        return DensityTemplate.all.enumerated().map { index, template in
+            let stableId = UUID(uuidString: "00000000-0000-0000-0000-\(String(format: "%012x", index))")!
+            return BoardPreset(
+                id: stableId,
                 name: template.name,
                 columns: template.layout.columns,
                 marginX: template.layout.marginX,
