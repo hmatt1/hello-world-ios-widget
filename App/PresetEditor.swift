@@ -26,7 +26,8 @@ struct PresetEditorView: View {
             ZStack {
                 boardView
             }
-            .frame(height: 360)
+            .frame(height: size.canvas.height + 60)
+            .animation(.spring(), value: size)
                 
                 ScrollView {
                     VStack(spacing: 24) {
