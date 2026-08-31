@@ -9,55 +9,41 @@ struct PresetListView: View {
         NavigationStack {
             List {
                 ForEach(store.presets) { preset in
-                    HStack {
-                        Button {
-                            selectedId = preset.id.uuidString
-                            isPresented = false
-                        } label: {
-                            HStack {
-                                VStack(alignment: .leading) {
-                                    Text(preset.name)
-                                        .font(.headline)
-                                        .foregroundColor(.primary)
-                                    Text(preset.id == BoardPresetStore.defaultPresetId ? "Built-in" : "Custom")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                }
-                                Spacer()
-                                if selectedId == preset.id.uuidString {
-                                    Image(systemName: "checkmark")
-                                        .foregroundColor(.blue)
-                                }
+                    Button {
+                        selectedId = preset.id.uuidString
+                        isPresented = false
+                    } label: {
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text(preset.name)
+                                    .font(.headline)
+                                    .foregroundColor(.primary)
+                                Text(preset.id == BoardPresetStore.defaultPresetId ? "Built-in" : "Custom")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
                             }
-                            .contentShape(Rectangle())
+                            Spacer()
+                            if selectedId == preset.id.uuidString {
+                                Image(systemName: "checkmark")
+                                    .foregroundColor(.blue)
+                            }
                         }
-                        .buttonStyle(.plain)
-                        
-                        Menu {
-                            Button {
-                                store.duplicate(id: preset.id)
+                    }
+                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                        if preset.id != BoardPresetStore.defaultPresetId {
+                            Button(role: .destructive) {
+                                deletePreset(preset)
                             } label: {
-                                Label("Duplicate", systemImage: "plus.square.on.square")
+                                Label("Delete", systemImage: "trash")
                             }
-                            
-                            if preset.id != BoardPresetStore.defaultPresetId {
-                                Button(role: .destructive) {
-                                    store.delete(id: preset.id)
-                                    if selectedId == preset.id.uuidString {
-                                        selectedId = BoardPresetStore.defaultPresetId.uuidString
-                                    }
-                                } label: {
-                                    Label("Delete", systemImage: "trash")
-                                }
-                            }
-                        } label: {
-                            Image(systemName: "ellipsis.circle")
-                                .foregroundColor(.secondary)
-                                .imageScale(.large)
-                                .frame(width: 44, height: 44)
-                                .contentShape(Rectangle())
                         }
-                        .buttonStyle(.borderless)
+                        
+                        Button {
+                            store.duplicate(id: preset.id)
+                        } label: {
+                            Label("Duplicate", systemImage: "plus.square.on.square")
+                        }
+                        .tint(.blue)
                     }
                     .contextMenu {
                         Button {
@@ -68,16 +54,14 @@ struct PresetListView: View {
                         
                         if preset.id != BoardPresetStore.defaultPresetId {
                             Button(role: .destructive) {
-                                store.delete(id: preset.id)
-                                if selectedId == preset.id.uuidString {
-                                    selectedId = BoardPresetStore.defaultPresetId.uuidString
-                                }
+                                deletePreset(preset)
                             } label: {
                                 Label("Delete", systemImage: "trash")
                             }
                         }
                     }
                 }
+                .onDelete(perform: deleteItems)
                 .onMove(perform: store.reorder)
             }
             .navigationTitle("Presets")
@@ -100,6 +84,22 @@ struct PresetListView: View {
                         Image(systemName: "plus")
                     }
                 }
+            }
+        }
+    }
+    
+    private func deletePreset(_ preset: BoardPreset) {
+        store.delete(id: preset.id)
+        if selectedId == preset.id.uuidString {
+            selectedId = BoardPresetStore.defaultPresetId.uuidString
+        }
+    }
+    
+    private func deleteItems(offsets: IndexSet) {
+        for index in offsets {
+            let preset = store.presets[index]
+            if preset.id != BoardPresetStore.defaultPresetId {
+                deletePreset(preset)
             }
         }
     }
