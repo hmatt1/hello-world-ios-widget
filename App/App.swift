@@ -17,21 +17,24 @@ struct PresetEditorWrapper: View {
     @State private var showingPresets = false
     
     var body: some View {
-        NavigationStack {
-            PresetEditorView(presetId: UUID(uuidString: lastEditedId) ?? BoardPresetStore.defaultPresetId)
-                .id(lastEditedId) // Force recreate when switching presets
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarLeading) {
-                        Button {
-                            showingPresets = true
-                        } label: {
-                            Label("Presets", systemImage: "list.bullet")
-                        }
-                    }
+        PresetEditorView(presetId: UUID(uuidString: lastEditedId) ?? BoardPresetStore.defaultPresetId)
+            .id(lastEditedId) // Force recreate when switching presets
+            .overlay(alignment: .topLeading) {
+                Button {
+                    showingPresets = true
+                } label: {
+                    Image(systemName: "list.bullet")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundColor(.white)
+                        .frame(width: 44, height: 44)
+                        .background(.ultraThinMaterial, in: Circle())
+                        .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
                 }
-                .sheet(isPresented: $showingPresets) {
-                    PresetListView(selectedId: $lastEditedId, isPresented: $showingPresets)
-                }
-        }
+                .padding(.leading, 16)
+                .padding(.top, 16)
+            }
+            .sheet(isPresented: $showingPresets) {
+                PresetListView(selectedId: $lastEditedId, isPresented: $showingPresets)
+            }
     }
 }
