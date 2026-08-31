@@ -166,19 +166,12 @@ struct PresetEditorView: View {
                 .background(.regularMaterial)
         }
         .background {
-            if let img = wallpaperStore.image {
-                Image(uiImage: img)
-                    .resizable()
-                    .scaledToFill()
-                    .ignoresSafeArea()
-            } else {
-                LinearGradient(
-                    colors: [Color.blue.opacity(0.8), Color.purple.opacity(0.8)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
-            }
+            LinearGradient(
+                colors: [Color.blue.opacity(0.8), Color.purple.opacity(0.8)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
         }
 
         .onChange(of: preset) { _, newPreset in
