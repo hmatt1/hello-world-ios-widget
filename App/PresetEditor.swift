@@ -137,6 +137,7 @@ struct PresetEditorView: View {
                     }
                 }
                 .scrollContentBackground(.hidden)
+                .listRowBackground(Color(uiColor: .systemBackground).opacity(0.4))
                 .background(.regularMaterial)
         }
         .background {
