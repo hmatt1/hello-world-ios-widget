@@ -126,11 +126,22 @@ struct SlotFace: View {
     let font: Font
     let paddingX: CGFloat
     let paddingY: CGFloat
-    let cornerRadius: CGFloat
+    let topLeadingRadius: CGFloat
+    let bottomLeadingRadius: CGFloat
+    let bottomTrailingRadius: CGFloat
+    let topTrailingRadius: CGFloat
     let style: BackgroundStyle
     let accented: Bool
 
     var body: some View {
+        let shape = UnevenRoundedRectangle(
+            topLeadingRadius: topLeadingRadius,
+            bottomLeadingRadius: bottomLeadingRadius,
+            bottomTrailingRadius: bottomTrailingRadius,
+            topTrailingRadius: topTrailingRadius,
+            style: .continuous
+        )
+        
         Text(name)
             .font(font)
             .fontWeight(.semibold)
@@ -148,15 +159,15 @@ struct SlotFace: View {
             )
             .background {
                 if !accented && style == .glassTiles {
-                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    shape
                         .fill(.regularMaterial)
                         .overlay(
-                            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                            shape
                                 .fill(surface.opacity(0.15))
                         )
                         .padding(0.5)
                 } else {
-                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    shape
                         .fill(surface)
                         .padding(0.5)
                 }
@@ -170,9 +181,9 @@ struct SlotFace: View {
 struct BoardView<Tile: View>: View {
     let grid: BoardGrid
     let count: Int
-    let tile: (Int) -> Tile
+    let tile: (Int, Int, Int) -> Tile
 
-    init(grid: BoardGrid, count: Int, @ViewBuilder tile: @escaping (Int) -> Tile) {
+    init(grid: BoardGrid, count: Int, @ViewBuilder tile: @escaping (Int, Int, Int) -> Tile) {
         self.grid = grid
         self.count = count
         self.tile = tile
@@ -185,7 +196,7 @@ struct BoardView<Tile: View>: View {
                     ForEach(0..<grid.columns, id: \.self) { column in
                         let index = row * grid.columns + column
                         if index < count {
-                            tile(index)
+                            tile(index, column, row)
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                         } else {
                             Color.clear

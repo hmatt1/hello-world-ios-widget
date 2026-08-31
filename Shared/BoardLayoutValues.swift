@@ -10,7 +10,8 @@ public struct BoardLayoutValues: Codable, Sendable, Equatable, Hashable {
     public var paddingX: CGFloat
     public var paddingY: CGFloat
     public var cornerRadius: CGFloat
-
+    public var outerCornerRadius: CGFloat
+    
     public init(
         columns: Int = 0,
         marginX: CGFloat,
@@ -19,7 +20,8 @@ public struct BoardLayoutValues: Codable, Sendable, Equatable, Hashable {
         spacingY: CGFloat,
         paddingX: CGFloat,
         paddingY: CGFloat,
-        cornerRadius: CGFloat
+        cornerRadius: CGFloat,
+        outerCornerRadius: CGFloat? = nil
     ) {
         self.columns = columns
         self.marginX = marginX
@@ -29,5 +31,6 @@ public struct BoardLayoutValues: Codable, Sendable, Equatable, Hashable {
         self.paddingX = paddingX
         self.paddingY = paddingY
         self.cornerRadius = cornerRadius
+        self.outerCornerRadius = outerCornerRadius ?? cornerRadius
     }
 }

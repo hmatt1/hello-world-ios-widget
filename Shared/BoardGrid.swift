@@ -191,3 +191,18 @@ struct BoardGrid: Sendable {
 enum BoardSample {
     static let names = ["Focus", "Coffee", "Drive", "Gym", "Lights", "Notes", "Music", "Timer", "Read"]
 }
+
+extension BoardGrid {
+    func topLeadingRadius(col: Int, row: Int) -> CGFloat {
+        (col == 0 && row == 0) ? layout.outerCornerRadius : layout.cornerRadius
+    }
+    func bottomLeadingRadius(col: Int, row: Int) -> CGFloat {
+        (col == 0 && row == rows - 1) ? layout.outerCornerRadius : layout.cornerRadius
+    }
+    func bottomTrailingRadius(col: Int, row: Int) -> CGFloat {
+        (col == columns - 1 && row == rows - 1) ? layout.outerCornerRadius : layout.cornerRadius
+    }
+    func topTrailingRadius(col: Int, row: Int) -> CGFloat {
+        (col == columns - 1 && row == 0) ? layout.outerCornerRadius : layout.cornerRadius
+    }
+}

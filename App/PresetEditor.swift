@@ -87,7 +87,8 @@ struct PresetEditorView: View {
                                 Stepper("Spacing Y: \(Int(preset.spacingY))", value: $preset.spacingY, in: 0...40)
                                 Stepper("Padding X: \(Int(preset.paddingX))", value: $preset.paddingX, in: 0...40)
                                 Stepper("Padding Y: \(Int(preset.paddingY))", value: $preset.paddingY, in: 0...40)
-                                Stepper("Corners: \(Int(preset.cornerRadius))", value: $preset.cornerRadius, in: 0...32)
+                                Stepper("Inner Corners: \(Int(preset.cornerRadius))", value: $preset.cornerRadius, in: 0...32)
+                                Stepper("Outer Corners: \(Int(preset.outerCornerRadius))", value: $preset.outerCornerRadius, in: 0...32)
                             }
                             .padding()
                             Divider().padding(.leading)
@@ -227,7 +228,7 @@ struct PresetEditorView: View {
         let grid = resolved.grid
         let names = Array(rawNames.prefix(resolved.visibleSlots))
         
-        return BoardView(grid: grid, count: names.count) { index in
+        return BoardView(grid: grid, count: names.count) { index, col, row in
             SlotFace(
                 name: names[index],
                 surface: preset.theme.surface(at: index, accented: false),
@@ -236,7 +237,10 @@ struct PresetEditorView: View {
                 font: grid.font,
                 paddingX: grid.layout.paddingX,
                 paddingY: grid.layout.paddingY,
-                cornerRadius: grid.layout.cornerRadius,
+                topLeadingRadius: grid.topLeadingRadius(col: col, row: row),
+                bottomLeadingRadius: grid.bottomLeadingRadius(col: col, row: row),
+                bottomTrailingRadius: grid.bottomTrailingRadius(col: col, row: row),
+                topTrailingRadius: grid.topTrailingRadius(col: col, row: row),
                 style: preset.background,
                 accented: false
             )

@@ -12,6 +12,7 @@ public struct BoardPreset: Codable, Sendable, Identifiable, Equatable {
     public var paddingX: CGFloat
     public var paddingY: CGFloat
     public var cornerRadius: CGFloat
+    public var outerCornerRadius: CGFloat
     public var theme: Theme
     public var background: BackgroundStyle
     public var bgOffsetX: CGFloat
@@ -28,6 +29,7 @@ public struct BoardPreset: Codable, Sendable, Identifiable, Equatable {
         paddingX: CGFloat,
         paddingY: CGFloat,
         cornerRadius: CGFloat,
+        outerCornerRadius: CGFloat? = nil,
         theme: Theme,
         background: BackgroundStyle,
         bgOffsetX: CGFloat = 0,
@@ -43,6 +45,7 @@ public struct BoardPreset: Codable, Sendable, Identifiable, Equatable {
         self.paddingX = paddingX
         self.paddingY = paddingY
         self.cornerRadius = cornerRadius
+        self.outerCornerRadius = outerCornerRadius ?? cornerRadius
         self.theme = theme
         self.background = background
         self.bgOffsetX = bgOffsetX
@@ -50,7 +53,7 @@ public struct BoardPreset: Codable, Sendable, Identifiable, Equatable {
     }
 
     enum CodingKeys: CodingKey {
-        case id, name, columns, marginX, marginY, spacingX, spacingY, paddingX, paddingY, cornerRadius, theme, background, bgOffsetX, bgOffsetY
+        case id, name, columns, marginX, marginY, spacingX, spacingY, paddingX, paddingY, cornerRadius, outerCornerRadius, theme, background, bgOffsetX, bgOffsetY
     }
 
     public init(from decoder: Decoder) throws {
@@ -65,6 +68,7 @@ public struct BoardPreset: Codable, Sendable, Identifiable, Equatable {
         paddingX = try container.decode(CGFloat.self, forKey: .paddingX)
         paddingY = try container.decode(CGFloat.self, forKey: .paddingY)
         cornerRadius = try container.decode(CGFloat.self, forKey: .cornerRadius)
+        outerCornerRadius = try container.decodeIfPresent(CGFloat.self, forKey: .outerCornerRadius) ?? cornerRadius
         theme = try container.decode(Theme.self, forKey: .theme)
         background = try container.decode(BackgroundStyle.self, forKey: .background)
         bgOffsetX = try container.decodeIfPresent(CGFloat.self, forKey: .bgOffsetX) ?? 0
@@ -83,6 +87,7 @@ public struct BoardPreset: Codable, Sendable, Identifiable, Equatable {
         try container.encode(paddingX, forKey: .paddingX)
         try container.encode(paddingY, forKey: .paddingY)
         try container.encode(cornerRadius, forKey: .cornerRadius)
+        try container.encode(outerCornerRadius, forKey: .outerCornerRadius)
         try container.encode(theme, forKey: .theme)
         try container.encode(background, forKey: .background)
         try container.encode(bgOffsetX, forKey: .bgOffsetX)
@@ -98,7 +103,8 @@ public struct BoardPreset: Codable, Sendable, Identifiable, Equatable {
             spacingY: spacingY,
             paddingX: paddingX,
             paddingY: paddingY,
-            cornerRadius: cornerRadius
+            cornerRadius: cornerRadius,
+            outerCornerRadius: outerCornerRadius
         )
     }
 }

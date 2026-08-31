@@ -76,14 +76,14 @@ struct LauncherWidgetView: View {
             if names.isEmpty {
                 BoardEmptyState(theme: preset.theme, accented: accented)
             } else {
-                BoardView(grid: grid, count: names.count) { index in
+                BoardView(grid: grid, count: names.count) { index, col, row in
                     if sample.isEmpty {
                         Button(intent: RunSystemShortcutIntent(shortcut: slots[index])) {
-                            face(name: names[index], index: index, grid: grid, accented: accented, theme: preset.theme, style: preset.background)
+                            face(name: names[index], index: index, col: col, row: row, grid: grid, accented: accented, theme: preset.theme, style: preset.background)
                         }
                         .buttonStyle(.plain)
                     } else {
-                        face(name: names[index], index: index, grid: grid, accented: accented, theme: preset.theme, style: preset.background)
+                        face(name: names[index], index: index, col: col, row: row, grid: grid, accented: accented, theme: preset.theme, style: preset.background)
                     }
                 }
             }
@@ -101,7 +101,7 @@ struct LauncherWidgetView: View {
         }
     }
 
-    private func face(name: String, index: Int, grid: BoardGrid, accented: Bool, theme: Theme, style: BackgroundStyle) -> SlotFace {
+    private func face(name: String, index: Int, col: Int, row: Int, grid: BoardGrid, accented: Bool, theme: Theme, style: BackgroundStyle) -> SlotFace {
         return SlotFace(
             name: name,
             surface: theme.surface(at: index, accented: accented),
@@ -110,7 +110,10 @@ struct LauncherWidgetView: View {
             font: grid.font,
             paddingX: grid.layout.paddingX,
             paddingY: grid.layout.paddingY,
-            cornerRadius: grid.layout.cornerRadius,
+            topLeadingRadius: grid.topLeadingRadius(col: col, row: row),
+            bottomLeadingRadius: grid.bottomLeadingRadius(col: col, row: row),
+            bottomTrailingRadius: grid.bottomTrailingRadius(col: col, row: row),
+            topTrailingRadius: grid.topTrailingRadius(col: col, row: row),
             style: style,
             accented: accented
         )
