@@ -244,7 +244,8 @@ struct PresetEditorView: View {
                 position: widgetPosition,
                 family: size,
                 offsetX: preset.bgOffsetX,
-                offsetY: preset.bgOffsetY
+                offsetY: preset.bgOffsetY,
+                isAppPreview: true
             ) 
         }
         .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))

@@ -34,6 +34,7 @@ struct BoardBackground: View {
 
     let offsetX: CGFloat
     let offsetY: CGFloat
+    var isAppPreview: Bool = false
 
     @ObservedObject private var store = WallpaperStore.shared
 
@@ -71,16 +72,20 @@ struct BoardBackground: View {
     
     @ViewBuilder
     private var transparentBackground: some View {
-        GeometryReader { proxy in
-            if let img = store.image, let screen = store.screenBounds {
-                let crop = cropOffset(for: position, widgetSize: proxy.size, screen: screen)
-                Image(uiImage: img)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: screen.width, height: screen.height)
-                    .offset(x: crop.width + offsetX, y: crop.height + offsetY)
-            } else {
-                themeBackground
+        if isAppPreview {
+            Color.clear
+        } else {
+            GeometryReader { proxy in
+                if let img = store.image, let screen = store.screenBounds {
+                    let crop = cropOffset(for: position, widgetSize: proxy.size, screen: screen)
+                    Image(uiImage: img)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: screen.width, height: screen.height)
+                        .offset(x: crop.width + offsetX, y: crop.height + offsetY)
+                } else {
+                    themeBackground
+                }
             }
         }
     }
