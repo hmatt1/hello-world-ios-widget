@@ -14,6 +14,7 @@ public struct BoardPreset: Codable, Sendable, Identifiable, Equatable {
     public var cornerRadius: CGFloat
     public var outerCornerRadius: CGFloat
     public var theme: Theme
+    public var customTheme: ThemeSpec?
     public var background: BackgroundStyle
 
     public init(
@@ -29,6 +30,7 @@ public struct BoardPreset: Codable, Sendable, Identifiable, Equatable {
         cornerRadius: CGFloat,
         outerCornerRadius: CGFloat? = nil,
         theme: Theme,
+        customTheme: ThemeSpec? = nil,
         background: BackgroundStyle
     ) {
         self.id = id
@@ -43,11 +45,12 @@ public struct BoardPreset: Codable, Sendable, Identifiable, Equatable {
         self.cornerRadius = cornerRadius
         self.outerCornerRadius = outerCornerRadius ?? cornerRadius
         self.theme = theme
+        self.customTheme = customTheme
         self.background = background
     }
 
     enum CodingKeys: CodingKey {
-        case id, name, columns, marginX, marginY, spacingX, spacingY, paddingX, paddingY, cornerRadius, outerCornerRadius, theme, background
+        case id, name, columns, marginX, marginY, spacingX, spacingY, paddingX, paddingY, cornerRadius, outerCornerRadius, theme, customTheme, background
     }
 
     public init(from decoder: Decoder) throws {
@@ -64,6 +67,7 @@ public struct BoardPreset: Codable, Sendable, Identifiable, Equatable {
         cornerRadius = try container.decode(CGFloat.self, forKey: .cornerRadius)
         outerCornerRadius = try container.decodeIfPresent(CGFloat.self, forKey: .outerCornerRadius) ?? cornerRadius
         theme = try container.decode(Theme.self, forKey: .theme)
+        customTheme = try container.decodeIfPresent(ThemeSpec.self, forKey: .customTheme)
         background = try container.decode(BackgroundStyle.self, forKey: .background)
     }
 
@@ -81,7 +85,12 @@ public struct BoardPreset: Codable, Sendable, Identifiable, Equatable {
         try container.encode(cornerRadius, forKey: .cornerRadius)
         try container.encode(outerCornerRadius, forKey: .outerCornerRadius)
         try container.encode(theme, forKey: .theme)
+        try container.encodeIfPresent(customTheme, forKey: .customTheme)
         try container.encode(background, forKey: .background)
+    }
+
+    public var activeSpec: ThemeSpec {
+        customTheme ?? theme.spec
     }
 
     public var layoutValues: BoardLayoutValues {

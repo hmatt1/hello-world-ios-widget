@@ -194,6 +194,57 @@ struct PresetEditorView: View {
                         }
                     }
                     
+                    Section("Colors") {
+                        if preset.customTheme != nil {
+                            Button("Reset to \(preset.theme.displayName) Defaults") {
+                                preset.customTheme = nil
+                            }
+                            .foregroundColor(.red)
+                        }
+                        
+                        let spec = preset.activeSpec
+                        ColorPicker("Background 1", selection: Binding(
+                            get: { spec.background.first?.color ?? .black },
+                            set: { updateCustomTheme { $0.background[0].color = $1 }($0) }
+                        ))
+                        
+                        ColorPicker("Background 2", selection: Binding(
+                            get: { spec.background.count > 1 ? spec.background[1].color : spec.background.first?.color ?? .black },
+                            set: { newValue in
+                                updateCustomTheme { spec in
+                                    if spec.background.count < 2 {
+                                        spec.background.append(RGB(red: 0, green: 0, blue: 0))
+                                    }
+                                    spec.background[1].color = newValue
+                                }(newValue)
+                            }
+                        ))
+                        
+                        ColorPicker("Label", selection: Binding(
+                            get: { spec.label.color },
+                            set: { updateCustomTheme { $0.label.color = $1 }($0) }
+                        ))
+                        
+                        ForEach(0..<12, id: \.self) { index in
+                            ColorPicker("Shortcut \(index + 1)", selection: Binding(
+                                get: {
+                                    if spec.accents.isEmpty { return spec.label.color }
+                                    return spec.accents[index % spec.accents.count].color
+                                },
+                                set: { newValue in
+                                    updateCustomTheme { spec in
+                                        if spec.accents.isEmpty {
+                                            spec.accents = Array(repeating: spec.label, count: 12)
+                                        } else while spec.accents.count < 12 {
+                                            spec.accents.append(spec.accents[spec.accents.count % spec.accents.count])
+                                        }
+                                        spec.accents[index].color = newValue
+                                    }(newValue)
+                                }
+                            ))
+                        }
+                    }
+                    
                 }
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
@@ -213,6 +264,14 @@ struct PresetEditorView: View {
         .onChange(of: preset) { _, newPreset in
             store.update(newPreset)
             WidgetCenter.shared.reloadAllTimelines()
+        }
+    }
+    
+    private func updateCustomTheme(_ mutator: @escaping (inout ThemeSpec, Color) -> Void) -> (Color) -> Void {
+        return { color in
+            var spec = preset.activeSpec
+            mutator(&spec, color)
+            preset.customTheme = spec
         }
     }
     
@@ -257,8 +316,8 @@ struct PresetEditorView: View {
         return BoardView(grid: grid, count: names.count) { index, col, row in
             SlotFace(
                 name: names[index],
-                surface: preset.theme.surface(at: index, accented: false),
-                label: preset.theme.labelColor(accented: false),
+                surface: preset.activeSpec.surface(at: index, accented: false),
+                label: preset.activeSpec.labelColor(accented: false),
                 mode: grid.mode,
                 font: grid.font,
                 paddingX: grid.layout.paddingX,
@@ -274,7 +333,7 @@ struct PresetEditorView: View {
         .frame(width: size.canvas.width, height: size.canvas.height)
         .background { 
             BoardBackground(
-                theme: preset.theme,
+                spec: preset.activeSpec,
                 accented: false,
                 style: preset.background,
                 position: widgetPosition,

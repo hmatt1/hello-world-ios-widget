@@ -1,6 +1,6 @@
 import SwiftUI
 
-extension Theme {
+extension ThemeSpec {
     /// Tile fill. In accented mode the system keeps the opacity of translucent
     /// content and tints it, so a faint chip is what preserves the board's
     /// structure once the color is taken away.
@@ -8,9 +8,8 @@ extension Theme {
         if accented {
             return .white.opacity(0.18)
         }
-        let accents = spec.accents
         guard !accents.isEmpty else {
-            return spec.label.color.opacity(0.12)
+            return label.color.opacity(0.12)
         }
         return accents[index % accents.count].color
     }
@@ -19,14 +18,14 @@ extension Theme {
     /// directly matches the device and keeps the in-app preview honest.
     /// `.primary` would follow the app's light or dark appearance instead.
     func labelColor(accented: Bool) -> Color {
-        accented ? .white : spec.label.color
+        accented ? .white : label.color
     }
 }
 
 /// Widget background. The system replaces this in accented mode, so it draws
 /// nothing there rather than fighting for the same pixels.
 struct BoardBackground: View {
-    let theme: Theme
+    let spec: ThemeSpec
     let accented: Bool
     let style: BackgroundStyle
     let position: WidgetPosition
@@ -54,7 +53,7 @@ struct BoardBackground: View {
     
     @ViewBuilder
     private var themeBackground: some View {
-        let colors = theme.spec.background
+        let colors = spec.background
         if colors.count >= 2 {
             LinearGradient(
                 colors: colors.map(\.color),
@@ -218,14 +217,14 @@ struct BoardView<Tile: View>: View {
 /// so it gets the same type discipline as a tile: this is the only thing the
 /// product ever tells anyone, and it has to survive Larger Text and Bold Text.
 struct BoardEmptyState: View {
-    let theme: Theme
+    let spec: ThemeSpec
     let accented: Bool
 
     var body: some View {
         Text("Edit Widget")
             .font(.footnote)
             .fontWeight(.semibold)
-            .foregroundStyle(theme.labelColor(accented: accented).opacity(0.75))
+            .foregroundStyle(spec.labelColor(accented: accented).opacity(0.75))
             .lineLimit(2)
             .minimumScaleFactor(0.6)
             .multilineTextAlignment(.center)

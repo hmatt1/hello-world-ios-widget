@@ -74,23 +74,23 @@ struct LauncherWidgetView: View {
 
         Group {
             if names.isEmpty {
-                BoardEmptyState(theme: preset.theme, accented: accented)
+                BoardEmptyState(spec: preset.activeSpec, accented: accented)
             } else {
                 BoardView(grid: grid, count: names.count) { index, col, row in
                     if sample.isEmpty {
                         Button(intent: RunSystemShortcutIntent(shortcut: slots[index])) {
-                            face(name: names[index], index: index, col: col, row: row, grid: grid, accented: accented, theme: preset.theme, style: preset.background)
+                            face(name: names[index], index: index, col: col, row: row, grid: grid, accented: accented, spec: preset.activeSpec, style: preset.background)
                         }
                         .buttonStyle(.plain)
                     } else {
-                        face(name: names[index], index: index, col: col, row: row, grid: grid, accented: accented, theme: preset.theme, style: preset.background)
+                        face(name: names[index], index: index, col: col, row: row, grid: grid, accented: accented, spec: preset.activeSpec, style: preset.background)
                     }
                 }
             }
         }
         .containerBackground(for: .widget) {
             BoardBackground(
-                theme: preset.theme,
+                spec: preset.activeSpec,
                 accented: accented,
                 style: preset.background,
                 position: entry.configuration.widgetPosition,
@@ -99,11 +99,11 @@ struct LauncherWidgetView: View {
         }
     }
 
-    private func face(name: String, index: Int, col: Int, row: Int, grid: BoardGrid, accented: Bool, theme: Theme, style: BackgroundStyle) -> SlotFace {
+    private func face(name: String, index: Int, col: Int, row: Int, grid: BoardGrid, accented: Bool, spec: ThemeSpec, style: BackgroundStyle) -> SlotFace {
         return SlotFace(
             name: name,
-            surface: theme.surface(at: index, accented: accented),
-            label: theme.labelColor(accented: accented),
+            surface: spec.surface(at: index, accented: accented),
+            label: spec.labelColor(accented: accented),
             mode: grid.mode,
             font: grid.font,
             paddingX: grid.layout.paddingX,

@@ -2,10 +2,10 @@ import SwiftUI
 
 /// A literal sRGB triple. Themes are the product's identity, so their colors
 /// are declared by hand rather than derived from system colors.
-struct RGB: Sendable {
-    let red: Double
-    let green: Double
-    let blue: Double
+struct RGB: Sendable, Codable, Equatable {
+    var red: Double
+    var green: Double
+    var blue: Double
 
     init(_ hex: UInt32) {
         red = Double((hex >> 16) & 0xFF) / 255
@@ -13,19 +13,34 @@ struct RGB: Sendable {
         blue = Double(hex & 0xFF) / 255
     }
 
+    init(red: Double, green: Double, blue: Double) {
+        self.red = red
+        self.green = green
+        self.blue = blue
+    }
+
     var color: Color {
-        Color(.sRGB, red: red, green: green, blue: blue)
+        get { Color(.sRGB, red: red, green: green, blue: blue) }
+        set {
+            if let components = UIColor(newValue).cgColor.components {
+                if components.count >= 3 {
+                    self.red = Double(components[0])
+                    self.green = Double(components[1])
+                    self.blue = Double(components[2])
+                }
+            }
+        }
     }
 }
 
-struct ThemeSpec: Sendable {
+struct ThemeSpec: Sendable, Codable, Equatable {
     /// Tile surfaces. Empty means the theme is monochrome and tiles use the
     /// label color at low opacity instead.
-    let accents: [RGB]
+    var accents: [RGB]
     /// One color for a flat background, two for a gradient.
-    let background: [RGB]
+    var background: [RGB]
     /// Label color. Every accent above clears 4.5:1 against it.
-    let label: RGB
+    var label: RGB
 }
 
 /// Five looked-at combinations, in place of a combinatorial style matrix.
