@@ -228,8 +228,10 @@ struct PresetEditorView: View {
                                     updateActiveTheme { spec in
                                         if spec.labels.isEmpty {
                                             spec.labels = Array(repeating: RGB(0xFFFFFF), count: 12)
-                                        } else while spec.labels.count < 12 {
-                                            spec.labels.append(spec.labels[spec.labels.count % spec.labels.count])
+                                        } else {
+                                            while spec.labels.count < 12 {
+                                                spec.labels.append(spec.labels[spec.labels.count % spec.labels.count])
+                                            }
                                         }
                                         spec.labels[index].color = newValue
                                     }(newValue)
@@ -248,8 +250,10 @@ struct PresetEditorView: View {
                                         if spec.accents.isEmpty {
                                             let fallback = spec.labels.first ?? RGB(0xFFFFFF)
                                             spec.accents = Array(repeating: fallback, count: 12)
-                                        } else while spec.accents.count < 12 {
-                                            spec.accents.append(spec.accents[spec.accents.count % spec.accents.count])
+                                        } else {
+                                            while spec.accents.count < 12 {
+                                                spec.accents.append(spec.accents[spec.accents.count % spec.accents.count])
+                                            }
                                         }
                                         spec.accents[index].color = newValue
                                     }(newValue)
