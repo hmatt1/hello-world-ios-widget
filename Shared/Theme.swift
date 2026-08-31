@@ -2,24 +2,24 @@ import SwiftUI
 
 /// A literal sRGB triple. Themes are the product's identity, so their colors
 /// are declared by hand rather than derived from system colors.
-struct RGB: Sendable, Codable, Equatable {
-    var red: Double
-    var green: Double
-    var blue: Double
+public struct RGB: Sendable, Codable, Equatable {
+    public var red: Double
+    public var green: Double
+    public var blue: Double
 
-    init(_ hex: UInt32) {
+    public init(_ hex: UInt32) {
         red = Double((hex >> 16) & 0xFF) / 255
         green = Double((hex >> 8) & 0xFF) / 255
         blue = Double(hex & 0xFF) / 255
     }
 
-    init(red: Double, green: Double, blue: Double) {
+    public init(red: Double, green: Double, blue: Double) {
         self.red = red
         self.green = green
         self.blue = blue
     }
 
-    var color: Color {
+    public var color: Color {
         get { Color(.sRGB, red: red, green: green, blue: blue) }
         set {
             if let components = UIColor(newValue).cgColor.components {
@@ -33,22 +33,22 @@ struct RGB: Sendable, Codable, Equatable {
     }
 }
 
-struct ThemeSpec: Sendable, Codable, Equatable {
+public struct ThemeSpec: Sendable, Codable, Equatable {
     /// Tile surfaces. Empty means the theme is monochrome and tiles use the
     /// label color at low opacity instead.
-    var accents: [RGB]
+    public var accents: [RGB]
     /// One color for a flat background, two for a gradient.
-    var background: [RGB]
+    public var background: [RGB]
     /// Label colors for each shortcut.
-    var labels: [RGB]
+    public var labels: [RGB]
     
-    init(accents: [RGB], background: [RGB], labels: [RGB]) {
+    public init(accents: [RGB], background: [RGB], labels: [RGB]) {
         self.accents = accents
         self.background = background
         self.labels = labels
     }
     
-    init(from decoder: Decoder) throws {
+    public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         accents = try container.decode([RGB].self, forKey: .accents)
         background = try container.decode([RGB].self, forKey: .background)
