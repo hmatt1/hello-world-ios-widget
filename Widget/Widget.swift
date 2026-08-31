@@ -58,7 +58,7 @@ struct LauncherWidgetView: View {
             ? slots.map { String(localized: $0.displayRepresentation.title) }
             : sample
         
-        let presetId = entry.configuration.preset?.id ?? BoardPresetStore.defaultPresetId
+        let presetId = entry.configuration.preset?.id ?? BoardPresetStore.loadRaw().first!.id
         let preset = BoardPresetStore.loadPreset(id: presetId)
         let layout = preset.layoutValues
         

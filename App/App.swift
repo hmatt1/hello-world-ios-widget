@@ -3,7 +3,7 @@ import SwiftUI
 @main
 struct LauncherBoardApp: App {
     @AppStorage("lastEditedPresetId", store: UserDefaults(suiteName: "group.com.hmatt1.launcherboard"))
-    var lastEditedPresetId: String = BoardPresetStore.defaultPresetId.uuidString
+    var lastEditedPresetId: String = ""
 
     var body: some Scene {
         WindowGroup {
@@ -17,8 +17,9 @@ struct PresetEditorWrapper: View {
     @State private var showingPresets = false
     
     var body: some View {
-        PresetEditorView(presetId: UUID(uuidString: lastEditedId) ?? BoardPresetStore.defaultPresetId)
-            .id(lastEditedId) // Force recreate when switching presets
+        let presetId = UUID(uuidString: lastEditedId) ?? BoardPresetStore.loadRaw().first!.id
+        PresetEditorView(presetId: presetId)
+            .id(presetId.uuidString) // Force recreate when switching presets
             .overlay(alignment: .topLeading) {
                 Button {
                     showingPresets = true

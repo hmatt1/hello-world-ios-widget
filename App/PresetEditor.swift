@@ -17,7 +17,7 @@ struct PresetEditorView: View {
     
     init(presetId: UUID) {
         self.presetId = presetId
-        let p = BoardPresetStore.shared.presets.first(where: { $0.id == presetId }) ?? BoardPresetStore.createDefaultPreset()
+        let p = BoardPresetStore.shared.presets.first(where: { $0.id == presetId }) ?? BoardPresetStore.loadRaw().first!
         _preset = State(initialValue: p)
     }
     
@@ -31,7 +31,6 @@ struct PresetEditorView: View {
                 Form {
                     Section("Preset") {
                         TextField("Preset Name", text: $preset.name)
-                            .disabled(preset.id == BoardPresetStore.defaultPresetId)
                     }
                     
                     Section("Preview") {
@@ -124,17 +123,6 @@ struct PresetEditorView: View {
                         }
                     }
                     
-                    if preset.id == BoardPresetStore.defaultPresetId {
-                        Section {
-                            Button("Reset to Original") {
-                                store.resetToOriginal(id: preset.id)
-                                if let p = store.presets.first(where: { $0.id == presetId }) {
-                                    preset = p
-                                }
-                            }
-                            .foregroundColor(.red)
-                        }
-                    }
                 }
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)

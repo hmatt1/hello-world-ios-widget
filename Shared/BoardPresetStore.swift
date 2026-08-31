@@ -28,8 +28,6 @@ public class BoardPresetStore: ObservableObject {
     private let defaults = UserDefaults(suiteName: "group.com.hmatt1.launcherboard")
     private let key = "board_presets"
     
-    public static let defaultPresetId = UUID(uuidString: "11111111-1111-1111-1111-111111111111")!
-    
     @Published public private(set) var presets: [BoardPreset] = []
     
     private init() {
@@ -41,18 +39,15 @@ public class BoardPresetStore: ObservableObject {
         guard let data = defaults?.data(forKey: "board_presets"),
               let loaded = try? JSONDecoder().decode([BoardPreset].self, from: data),
               !loaded.isEmpty else {
-            return [createDefaultPreset()]
+            return createDefaultPresets()
         }
         
-        if !loaded.contains(where: { $0.id == defaultPresetId }) {
-            return [createDefaultPreset()] + loaded
-        }
         return loaded
     }
     
     public static nonisolated func loadPreset(id: UUID) -> BoardPreset {
         let all = loadRaw()
-        return all.first { $0.id == id } ?? all.first { $0.id == defaultPresetId } ?? createDefaultPreset()
+        return all.first { $0.id == id } ?? all.first ?? createDefaultPresets().first!
     }
     
     private func load() {
@@ -65,11 +60,30 @@ public class BoardPresetStore: ObservableObject {
         }
     }
     
-    public static nonisolated func createDefaultPreset() -> BoardPreset {
+    public static nonisolated func createDefaultPresets() -> [BoardPreset] {
+        return DensityTemplate.all.map { template in
+            BoardPreset(
+                id: UUID(),
+                name: template.name,
+                columns: template.layout.columns,
+                marginX: template.layout.marginX,
+                marginY: template.layout.marginY,
+                spacingX: template.layout.spacingX,
+                spacingY: template.layout.spacingY,
+                paddingX: template.layout.paddingX,
+                paddingY: template.layout.paddingY,
+                cornerRadius: template.layout.cornerRadius,
+                theme: .midnight,
+                background: .theme
+            )
+        }
+    }
+    
+    public func create(name: String) -> BoardPreset {
         let template = DensityTemplate.all.first { $0.id == "compact" }!.layout
-        return BoardPreset(
-            id: defaultPresetId,
-            name: "Default",
+        let newPreset = BoardPreset(
+            id: UUID(),
+            name: name,
             columns: template.columns,
             marginX: template.marginX,
             marginY: template.marginY,
@@ -80,27 +94,6 @@ public class BoardPresetStore: ObservableObject {
             cornerRadius: template.cornerRadius,
             theme: .midnight,
             background: .theme
-        )
-    }
-    
-    public func create(name: String) -> BoardPreset {
-        var preset = BoardPresetStore.createDefaultPreset()
-        preset.name = name
-        let id = UUID()
-        // Workaround for let id
-        let newPreset = BoardPreset(
-            id: id,
-            name: name,
-            columns: preset.columns,
-            marginX: preset.marginX,
-            marginY: preset.marginY,
-            spacingX: preset.spacingX,
-            spacingY: preset.spacingY,
-            paddingX: preset.paddingX,
-            paddingY: preset.paddingY,
-            cornerRadius: preset.cornerRadius,
-            theme: preset.theme,
-            background: preset.background
         )
         presets.append(newPreset)
         save()
@@ -138,19 +131,13 @@ public class BoardPresetStore: ObservableObject {
     }
     
     public func delete(id: UUID) {
-        guard id != BoardPresetStore.defaultPresetId else { return }
+        guard presets.count > 1 else { return }
         presets.removeAll { $0.id == id }
         save()
     }
     
     public func reorder(from source: IndexSet, to destination: Int) {
         presets.move(fromOffsets: source, toOffset: destination)
-        save()
-    }
-    
-    public func resetToOriginal(id: UUID) {
-        guard id == BoardPresetStore.defaultPresetId, let index = presets.firstIndex(where: { $0.id == id }) else { return }
-        presets[index] = BoardPresetStore.createDefaultPreset()
         save()
     }
 }

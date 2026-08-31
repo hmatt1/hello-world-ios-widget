@@ -18,7 +18,7 @@ struct PresetListView: View {
                                 Text(preset.name)
                                     .font(.headline)
                                     .foregroundColor(.primary)
-                                Text(preset.id == BoardPresetStore.defaultPresetId ? "Built-in" : "Custom")
+                                Text(preset.theme.rawValue.capitalized)
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
@@ -30,12 +30,10 @@ struct PresetListView: View {
                         }
                     }
                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                        if preset.id != BoardPresetStore.defaultPresetId {
-                            Button(role: .destructive) {
-                                deletePreset(preset)
-                            } label: {
-                                Label("Delete", systemImage: "trash")
-                            }
+                        Button(role: .destructive) {
+                            deletePreset(preset)
+                        } label: {
+                            Label("Delete", systemImage: "trash")
                         }
                         
                         Button {
@@ -52,12 +50,10 @@ struct PresetListView: View {
                             Label("Duplicate", systemImage: "plus.square.on.square")
                         }
                         
-                        if preset.id != BoardPresetStore.defaultPresetId {
-                            Button(role: .destructive) {
-                                deletePreset(preset)
-                            } label: {
-                                Label("Delete", systemImage: "trash")
-                            }
+                        Button(role: .destructive) {
+                            deletePreset(preset)
+                        } label: {
+                            Label("Delete", systemImage: "trash")
                         }
                     }
                 }
@@ -91,16 +87,14 @@ struct PresetListView: View {
     private func deletePreset(_ preset: BoardPreset) {
         store.delete(id: preset.id)
         if selectedId == preset.id.uuidString {
-            selectedId = BoardPresetStore.defaultPresetId.uuidString
+            selectedId = store.presets.first?.id.uuidString ?? ""
         }
     }
     
     private func deleteItems(offsets: IndexSet) {
         for index in offsets {
             let preset = store.presets[index]
-            if preset.id != BoardPresetStore.defaultPresetId {
                 deletePreset(preset)
-            }
         }
     }
 }
