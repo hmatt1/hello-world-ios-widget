@@ -94,9 +94,7 @@ struct LauncherWidgetView: View {
                 accented: accented,
                 style: preset.background,
                 position: entry.configuration.widgetPosition,
-                family: size,
-                offsetX: preset.bgOffsetX,
-                offsetY: preset.bgOffsetY
+                family: size
             )
         }
     }

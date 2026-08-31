@@ -32,8 +32,6 @@ struct BoardBackground: View {
     let position: WidgetPosition
     let family: BoardSize
 
-    let offsetX: CGFloat
-    let offsetY: CGFloat
     var isAppPreview: Bool = false
 
     @ObservedObject private var store = WallpaperStore.shared
@@ -82,7 +80,7 @@ struct BoardBackground: View {
                         .resizable()
                         .scaledToFill()
                         .frame(width: screen.width, height: screen.height)
-                        .offset(x: crop.width + offsetX, y: crop.height + offsetY)
+                        .offset(x: crop.width, y: crop.height)
                 } else {
                     themeBackground
                 }

@@ -15,8 +15,6 @@ public struct BoardPreset: Codable, Sendable, Identifiable, Equatable {
     public var outerCornerRadius: CGFloat
     public var theme: Theme
     public var background: BackgroundStyle
-    public var bgOffsetX: CGFloat
-    public var bgOffsetY: CGFloat
 
     public init(
         id: UUID = UUID(),
@@ -31,9 +29,7 @@ public struct BoardPreset: Codable, Sendable, Identifiable, Equatable {
         cornerRadius: CGFloat,
         outerCornerRadius: CGFloat? = nil,
         theme: Theme,
-        background: BackgroundStyle,
-        bgOffsetX: CGFloat = 0,
-        bgOffsetY: CGFloat = 0
+        background: BackgroundStyle
     ) {
         self.id = id
         self.name = name
@@ -48,12 +44,10 @@ public struct BoardPreset: Codable, Sendable, Identifiable, Equatable {
         self.outerCornerRadius = outerCornerRadius ?? cornerRadius
         self.theme = theme
         self.background = background
-        self.bgOffsetX = bgOffsetX
-        self.bgOffsetY = bgOffsetY
     }
 
     enum CodingKeys: CodingKey {
-        case id, name, columns, marginX, marginY, spacingX, spacingY, paddingX, paddingY, cornerRadius, outerCornerRadius, theme, background, bgOffsetX, bgOffsetY
+        case id, name, columns, marginX, marginY, spacingX, spacingY, paddingX, paddingY, cornerRadius, outerCornerRadius, theme, background
     }
 
     public init(from decoder: Decoder) throws {
@@ -71,8 +65,6 @@ public struct BoardPreset: Codable, Sendable, Identifiable, Equatable {
         outerCornerRadius = try container.decodeIfPresent(CGFloat.self, forKey: .outerCornerRadius) ?? cornerRadius
         theme = try container.decode(Theme.self, forKey: .theme)
         background = try container.decode(BackgroundStyle.self, forKey: .background)
-        bgOffsetX = try container.decodeIfPresent(CGFloat.self, forKey: .bgOffsetX) ?? 0
-        bgOffsetY = try container.decodeIfPresent(CGFloat.self, forKey: .bgOffsetY) ?? 0
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -90,8 +82,6 @@ public struct BoardPreset: Codable, Sendable, Identifiable, Equatable {
         try container.encode(outerCornerRadius, forKey: .outerCornerRadius)
         try container.encode(theme, forKey: .theme)
         try container.encode(background, forKey: .background)
-        try container.encode(bgOffsetX, forKey: .bgOffsetX)
-        try container.encode(bgOffsetY, forKey: .bgOffsetY)
     }
 
     public var layoutValues: BoardLayoutValues {

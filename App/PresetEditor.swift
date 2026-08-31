@@ -140,8 +140,7 @@ struct PresetEditorView: View {
                                     }
                                     .pickerStyle(.menu)
                                     
-                                    Stepper("Fine-tune X: \(Int(preset.bgOffsetX))", value: $preset.bgOffsetX, in: -100...100)
-                                    Stepper("Fine-tune Y: \(Int(preset.bgOffsetY))", value: $preset.bgOffsetY, in: -100...100)
+
                                 }
                             }
                             .padding()
@@ -243,8 +242,6 @@ struct PresetEditorView: View {
                 style: preset.background,
                 position: widgetPosition,
                 family: size,
-                offsetX: preset.bgOffsetX,
-                offsetY: preset.bgOffsetY,
                 isAppPreview: true
             ) 
         }
