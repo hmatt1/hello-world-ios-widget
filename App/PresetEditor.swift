@@ -28,129 +28,104 @@ struct PresetEditorView: View {
             }
             .frame(height: size.canvas.height + 60)
             .animation(.spring(), value: size)
-                
-                ScrollView {
-                    VStack(spacing: 24) {
-                        // Unified Control Card
-                        VStack(spacing: 0) {
-                            
-                            // NAME
-                            HStack {
-                                Text("Name")
-                                Spacer()
-                                TextField("Preset Name", text: $preset.name)
-                                    .multilineTextAlignment(.trailing)
-                                    .disabled(preset.id == BoardPresetStore.defaultPresetId)
-                            }
-                            .padding()
-                            Divider().padding(.leading)
-                            
-                            // PREVIEW SETTINGS
-                            VStack(spacing: 16) {
-                                Picker("Size", selection: $size) {
-                                    Text("S").tag(BoardSize.small)
-                                    Text("M").tag(BoardSize.medium)
-                                    Text("L").tag(BoardSize.large)
-                                }
-                                .pickerStyle(.segmented)
-                                
-                                Stepper("Preview Slots: \(slots)", value: $slots, in: 1...12)
-                            }
-                            .padding()
-                            Divider().padding(.leading)
-                            
-                            // LAYOUT
-                            VStack(spacing: 16) {
-                                Menu {
-                                    ForEach(DensityTemplate.all) { template in
-                                        Button(template.name) {
-                                            applyTemplate(template)
-                                        }
-                                    }
-                                } label: {
-                                    HStack {
-                                        Text("Density Template")
-                                            .foregroundColor(.primary)
-                                        Spacer()
-                                        Text(currentTemplateName)
-                                            .foregroundColor(.secondary)
-                                        Image(systemName: "chevron.up.chevron.down")
-                                            .imageScale(.small)
-                                            .foregroundColor(.secondary)
-                                    }
-                                }
-                                
-                                Stepper(preset.columns == 0 ? "Columns: Auto" : "Columns: \(preset.columns)", value: $preset.columns, in: 0...12)
-                                
-                                Stepper("Margin X: \(Int(preset.marginX))", value: $preset.marginX, in: 0...40)
-                                Stepper("Margin Y: \(Int(preset.marginY))", value: $preset.marginY, in: 0...40)
-                                Stepper("Spacing X: \(Int(preset.spacingX))", value: $preset.spacingX, in: 0...40)
-                                Stepper("Spacing Y: \(Int(preset.spacingY))", value: $preset.spacingY, in: 0...40)
-                                Stepper("Padding X: \(Int(preset.paddingX))", value: $preset.paddingX, in: 0...40)
-                                Stepper("Padding Y: \(Int(preset.paddingY))", value: $preset.paddingY, in: 0...40)
-                                Stepper("Inner Corners: \(Int(preset.cornerRadius))", value: $preset.cornerRadius, in: 0...32)
-                                Stepper("Outer Corners: \(Int(preset.outerCornerRadius))", value: $preset.outerCornerRadius, in: 0...32)
-                            }
-                            .padding()
-                            Divider().padding(.leading)
-                            
-                            // BACKGROUND
-                            VStack(spacing: 16) {
-                                Picker("Style", selection: $preset.background) {
-                                    ForEach(BackgroundStyle.allCases, id: \.self) { style in
-                                        Text(style.displayName).tag(style)
-                                    }
-                                }
-                                .pickerStyle(.segmented)
-                                
-                                if preset.background == .theme {
-                                    Picker("Theme", selection: $preset.theme) {
-                                        ForEach(Theme.allCases, id: \.self) { t in
-                                            Text(t.displayName).tag(t)
-                                        }
-                                    }
-                                    .pickerStyle(.menu)
-                                }
-                                
-                                if preset.background == .transparent || preset.background == .glassTiles {
-                                    PhotosPicker(selection: $wallpaperItem, matching: .images) {
-                                        HStack {
-                                            Text("Upload Wallpaper")
-                                            Spacer()
-                                            if wallpaperStore.image != nil {
-                                                Image(systemName: "checkmark.circle.fill").foregroundColor(.green)
-                                            }
-                                        }
-                                    }
-                                    .onChange(of: wallpaperItem) { _, newItem in
-                                        Task {
-                                            if let data = try? await newItem?.loadTransferable(type: Data.self),
-                                               let uiImage = UIImage(data: data) {
-                                                await MainActor.run {
-                                                    wallpaperStore.save(image: uiImage, screenBounds: UIScreen.main.bounds.size)
-                                                }
-                                            }
-                                        }
-                                    }
-                                    
-                                    Picker("Widget Position", selection: $widgetPosition) {
-                                        ForEach(WidgetPosition.allCases, id: \.self) { pos in
-                                            Text(pos.displayName).tag(pos)
-                                        }
-                                    }
-                                    .pickerStyle(.menu)
-                                    
-
-                                }
-                            }
-                            .padding()
-                            
+                Form {
+                    Section("Preset") {
+                        TextField("Preset Name", text: $preset.name)
+                            .disabled(preset.id == BoardPresetStore.defaultPresetId)
+                    }
+                    
+                    Section("Preview") {
+                        Picker("Size", selection: $size) {
+                            Text("S").tag(BoardSize.small)
+                            Text("M").tag(BoardSize.medium)
+                            Text("L").tag(BoardSize.large)
                         }
-                        .background(Color(uiColor: .secondarySystemGroupedBackground).opacity(0.6))
-                        .cornerRadius(20)
-                        .padding()
+                        .pickerStyle(.segmented)
                         
-                        if preset.id == BoardPresetStore.defaultPresetId {
+                        Stepper("Preview Slots: \(slots)", value: $slots, in: 1...12)
+                    }
+                    
+                    Section("Layout") {
+                        Menu {
+                            ForEach(DensityTemplate.all) { template in
+                                Button(template.name) {
+                                    applyTemplate(template)
+                                }
+                            }
+                        } label: {
+                            HStack {
+                                Text("Density Template")
+                                    .foregroundColor(.primary)
+                                Spacer()
+                                Text(currentTemplateName)
+                                    .foregroundColor(.secondary)
+                                Image(systemName: "chevron.up.chevron.down")
+                                    .imageScale(.small)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        
+                        Stepper(preset.columns == 0 ? "Columns: Auto" : "Columns: \(preset.columns)", value: $preset.columns, in: 0...12)
+                        
+                        Stepper("Margin X: \(Int(preset.marginX))", value: $preset.marginX, in: 0...40)
+                        Stepper("Margin Y: \(Int(preset.marginY))", value: $preset.marginY, in: 0...40)
+                        Stepper("Spacing X: \(Int(preset.spacingX))", value: $preset.spacingX, in: 0...40)
+                        Stepper("Spacing Y: \(Int(preset.spacingY))", value: $preset.spacingY, in: 0...40)
+                        Stepper("Padding X: \(Int(preset.paddingX))", value: $preset.paddingX, in: 0...40)
+                        Stepper("Padding Y: \(Int(preset.paddingY))", value: $preset.paddingY, in: 0...40)
+                        Stepper("Inner Corners: \(Int(preset.cornerRadius))", value: $preset.cornerRadius, in: 0...32)
+                        Stepper("Outer Corners: \(Int(preset.outerCornerRadius))", value: $preset.outerCornerRadius, in: 0...32)
+                    }
+                    
+                    Section("Background") {
+                        Picker("Style", selection: $preset.background) {
+                            ForEach(BackgroundStyle.allCases, id: \.self) { style in
+                                Text(style.displayName).tag(style)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                        
+                        if preset.background == .theme {
+                            Picker("Theme", selection: $preset.theme) {
+                                ForEach(Theme.allCases, id: \.self) { t in
+                                    Text(t.displayName).tag(t)
+                                }
+                            }
+                            .pickerStyle(.menu)
+                        }
+                        
+                        if preset.background == .transparent || preset.background == .glassTiles {
+                            PhotosPicker(selection: $wallpaperItem, matching: .images) {
+                                HStack {
+                                    Text("Upload Wallpaper")
+                                    Spacer()
+                                    if wallpaperStore.image != nil {
+                                        Image(systemName: "checkmark.circle.fill").foregroundColor(.green)
+                                    }
+                                }
+                            }
+                            .onChange(of: wallpaperItem) { _, newItem in
+                                Task {
+                                    if let data = try? await newItem?.loadTransferable(type: Data.self),
+                                       let uiImage = UIImage(data: data) {
+                                        await MainActor.run {
+                                            wallpaperStore.save(image: uiImage, screenBounds: UIScreen.main.bounds.size)
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            Picker("Widget Position", selection: $widgetPosition) {
+                                ForEach(WidgetPosition.allCases, id: \.self) { pos in
+                                    Text(pos.displayName).tag(pos)
+                                }
+                            }
+                            .pickerStyle(.menu)
+                        }
+                    }
+                    
+                    if preset.id == BoardPresetStore.defaultPresetId {
+                        Section {
                             Button("Reset to Original") {
                                 store.resetToOriginal(id: preset.id)
                                 if let p = store.presets.first(where: { $0.id == presetId }) {
@@ -160,8 +135,8 @@ struct PresetEditorView: View {
                             .foregroundColor(.red)
                         }
                     }
-                    .padding(.bottom, 40)
                 }
+                .scrollContentBackground(.hidden)
                 .background(.regularMaterial)
         }
         .background {
