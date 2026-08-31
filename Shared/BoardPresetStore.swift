@@ -74,7 +74,7 @@ public class BoardPresetStore: ObservableObject {
                 paddingX: template.layout.paddingX,
                 paddingY: template.layout.paddingY,
                 cornerRadius: template.layout.cornerRadius,
-                theme: .midnight,
+                themeId: BoardThemeStore.createDefaultThemes().first(where: { t in t.name == "Midnight" })!.id,
                 background: .theme
             )
         }
@@ -93,7 +93,7 @@ public class BoardPresetStore: ObservableObject {
             paddingX: template.paddingX,
             paddingY: template.paddingY,
             cornerRadius: template.cornerRadius,
-            theme: .midnight,
+            themeId: BoardThemeStore.createDefaultThemes().first(where: { t in t.name == "Midnight" })!.id,
             background: .theme
         )
         presets.append(newPreset)
@@ -114,7 +114,7 @@ public class BoardPresetStore: ObservableObject {
             paddingX: existing.paddingX,
             paddingY: existing.paddingY,
             cornerRadius: existing.cornerRadius,
-            theme: existing.theme,
+            themeId: existing.themeId,
             background: existing.background
         )
         if let index = presets.firstIndex(where: { $0.id == id }) {

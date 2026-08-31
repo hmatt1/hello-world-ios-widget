@@ -9,7 +9,7 @@ extension ThemeSpec {
             return .white.opacity(0.18)
         }
         guard !accents.isEmpty else {
-            return label.color.opacity(0.12)
+            return labels.first?.color.opacity(0.12) ?? .white.opacity(0.12)
         }
         return accents[index % accents.count].color
     }
@@ -17,8 +17,10 @@ extension ThemeSpec {
     /// iOS tints primary content white in accented mode, so naming white
     /// directly matches the device and keeps the in-app preview honest.
     /// `.primary` would follow the app's light or dark appearance instead.
-    func labelColor(accented: Bool) -> Color {
-        accented ? .white : label.color
+    func labelColor(at index: Int, accented: Bool) -> Color {
+        if accented { return .white }
+        if labels.isEmpty { return .white }
+        return labels[index % labels.count].color
     }
 }
 
@@ -224,7 +226,7 @@ struct BoardEmptyState: View {
         Text("Edit Widget")
             .font(.footnote)
             .fontWeight(.semibold)
-            .foregroundStyle(spec.labelColor(accented: accented).opacity(0.75))
+            .foregroundStyle(spec.labelColor(at: 0, accented: accented).opacity(0.75))
             .lineLimit(2)
             .minimumScaleFactor(0.6)
             .multilineTextAlignment(.center)

@@ -103,7 +103,7 @@ struct LauncherWidgetView: View {
         return SlotFace(
             name: name,
             surface: spec.surface(at: index, accented: accented),
-            label: spec.labelColor(accented: accented),
+            label: spec.labelColor(at: index, accented: accented),
             mode: grid.mode,
             font: grid.font,
             paddingX: grid.layout.paddingX,

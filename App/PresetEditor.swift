@@ -64,6 +64,8 @@ struct PresetEditorView: View {
     @State private var widgetPosition: WidgetPosition = .topLeft
     
     @ObservedObject private var wallpaperStore = WallpaperStore.shared
+    @ObservedObject private var themeStore = BoardThemeStore.shared
+    @State private var showingThemeList = false
     
     var onShowPresets: () -> Void
     
@@ -96,6 +98,18 @@ struct PresetEditorView: View {
                         .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
                 }
                 .padding(.leading, 16)
+                .padding(.bottom, 8)
+            }
+            .overlay(alignment: .bottomTrailing) {
+                Button(action: { showingThemeList = true }) {
+                    Image(systemName: "paintpalette.fill")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundColor(.white)
+                        .frame(width: 44, height: 44)
+                        .background(.ultraThinMaterial, in: Circle())
+                        .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+                }
+                .padding(.trailing, 16)
                 .padding(.bottom, 8)
             }
                 Form {
@@ -155,15 +169,6 @@ struct PresetEditorView: View {
                         }
                         .pickerStyle(.segmented)
                         
-                        if preset.background == .theme {
-                            Picker("Theme", selection: $preset.theme) {
-                                ForEach(Theme.allCases, id: \.self) { t in
-                                    Text(t.displayName).tag(t)
-                                }
-                            }
-                            .pickerStyle(.menu)
-                        }
-                        
                         if preset.background == .transparent || preset.background == .glassTiles {
                             PhotosPicker(selection: $wallpaperItem, matching: .images) {
                                 HStack {
@@ -194,24 +199,17 @@ struct PresetEditorView: View {
                         }
                     }
                     
-                    Section("Colors") {
-                        if preset.customTheme != nil {
-                            Button("Reset to \(preset.theme.displayName) Defaults") {
-                                preset.customTheme = nil
-                            }
-                            .foregroundColor(.red)
-                        }
-                        
+                    Section("Colors (Editing \(themeStore.themes.first(where: { $0.id == preset.themeId })?.name ?? "Theme"))") {
                         let spec = preset.activeSpec
                         ColorPicker("Background 1", selection: Binding(
                             get: { spec.background.first?.color ?? .black },
-                            set: { updateCustomTheme { $0.background[0].color = $1 }($0) }
+                            set: { updateActiveTheme { $0.background[0].color = $1 }($0) }
                         ))
                         
                         ColorPicker("Background 2", selection: Binding(
                             get: { spec.background.count > 1 ? spec.background[1].color : spec.background.first?.color ?? .black },
                             set: { newValue in
-                                updateCustomTheme { spec in
+                                updateActiveTheme { spec in
                                     if spec.background.count < 2 {
                                         spec.background.append(RGB(red: 0, green: 0, blue: 0))
                                     }
@@ -220,21 +218,36 @@ struct PresetEditorView: View {
                             }
                         ))
                         
-                        ColorPicker("Label", selection: Binding(
-                            get: { spec.label.color },
-                            set: { updateCustomTheme { $0.label.color = $1 }($0) }
-                        ))
+                        ForEach(0..<12, id: \.self) { index in
+                            ColorPicker("Label \(index + 1)", selection: Binding(
+                                get: {
+                                    if spec.labels.isEmpty { return .white }
+                                    return spec.labels[index % spec.labels.count].color
+                                },
+                                set: { newValue in
+                                    updateActiveTheme { spec in
+                                        if spec.labels.isEmpty {
+                                            spec.labels = Array(repeating: RGB(0xFFFFFF), count: 12)
+                                        } else while spec.labels.count < 12 {
+                                            spec.labels.append(spec.labels[spec.labels.count % spec.labels.count])
+                                        }
+                                        spec.labels[index].color = newValue
+                                    }(newValue)
+                                }
+                            ))
+                        }
                         
                         ForEach(0..<12, id: \.self) { index in
                             ColorPicker("Shortcut \(index + 1)", selection: Binding(
                                 get: {
-                                    if spec.accents.isEmpty { return spec.label.color }
+                                    if spec.accents.isEmpty { return spec.labels.first?.color ?? .white }
                                     return spec.accents[index % spec.accents.count].color
                                 },
                                 set: { newValue in
-                                    updateCustomTheme { spec in
+                                    updateActiveTheme { spec in
                                         if spec.accents.isEmpty {
-                                            spec.accents = Array(repeating: spec.label, count: 12)
+                                            let fallback = spec.labels.first ?? RGB(0xFFFFFF)
+                                            spec.accents = Array(repeating: fallback, count: 12)
                                         } else while spec.accents.count < 12 {
                                             spec.accents.append(spec.accents[spec.accents.count % spec.accents.count])
                                         }
@@ -260,18 +273,24 @@ struct PresetEditorView: View {
             )
             .ignoresSafeArea()
         }
-
+        .sheet(isPresented: $showingThemeList) {
+            ThemeListView(selectedId: Binding(
+                get: { preset.themeId.uuidString },
+                set: { if let uuid = UUID(uuidString: $0) { preset.themeId = uuid } }
+            ), isPresented: $showingThemeList)
+        }
         .onChange(of: preset) { _, newPreset in
             store.update(newPreset)
             WidgetCenter.shared.reloadAllTimelines()
         }
     }
     
-    private func updateCustomTheme(_ mutator: @escaping (inout ThemeSpec, Color) -> Void) -> (Color) -> Void {
+    private func updateActiveTheme(_ mutator: @escaping (inout ThemeSpec, Color) -> Void) -> (Color) -> Void {
         return { color in
-            var spec = preset.activeSpec
-            mutator(&spec, color)
-            preset.customTheme = spec
+            guard var theme = themeStore.themes.first(where: { $0.id == preset.themeId }) else { return }
+            mutator(&theme.spec, color)
+            themeStore.update(theme)
+            WidgetCenter.shared.reloadAllTimelines()
         }
     }
     

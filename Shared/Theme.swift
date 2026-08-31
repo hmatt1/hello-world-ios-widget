@@ -39,8 +39,46 @@ struct ThemeSpec: Sendable, Codable, Equatable {
     var accents: [RGB]
     /// One color for a flat background, two for a gradient.
     var background: [RGB]
-    /// Label color. Every accent above clears 4.5:1 against it.
-    var label: RGB
+    /// Label colors for each shortcut.
+    var labels: [RGB]
+    
+    init(accents: [RGB], background: [RGB], labels: [RGB]) {
+        self.accents = accents
+        self.background = background
+        self.labels = labels
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        accents = try container.decode([RGB].self, forKey: .accents)
+        background = try container.decode([RGB].self, forKey: .background)
+        
+        if let singleLabel = try? container.decode(RGB.self, forKey: .labels) {
+            labels = Array(repeating: singleLabel, count: 12)
+        } else if let labelsArray = try? container.decode([RGB].self, forKey: .labels) {
+            labels = labelsArray
+        } else {
+            labels = Array(repeating: RGB(0xFFFFFF), count: 12)
+        }
+    }
+    
+    enum CodingKeys: String, CodingKey {
+        case accents
+        case background
+        case labels = "label" // map old "label" key to "labels"
+    }
+}
+
+public struct BoardTheme: Codable, Sendable, Identifiable, Equatable {
+    public let id: UUID
+    public var name: String
+    public var spec: ThemeSpec
+    
+    public init(id: UUID = UUID(), name: String, spec: ThemeSpec) {
+        self.id = id
+        self.name = name
+        self.spec = spec
+    }
 }
 
 /// Five looked-at combinations, in place of a combinatorial style matrix.
@@ -67,31 +105,31 @@ public enum Theme: String, Codable, CaseIterable, Sendable {
             return ThemeSpec(
                 accents: [],
                 background: [RGB(0x0B0B0C)],
-                label: RGB(0xF5F5F7)
+                labels: Array(repeating: RGB(0xF5F5F7), count: 12)
             )
         case .paper:
             return ThemeSpec(
                 accents: [],
                 background: [RGB(0xF7F4EF)],
-                label: RGB(0x111014)
+                labels: Array(repeating: RGB(0x111014), count: 12)
             )
         case .midnight:
             return ThemeSpec(
                 accents: [RGB(0x3B5BDB), RGB(0x1971C2), RGB(0x5F3DC4), RGB(0x7048B6), RGB(0xC2255C), RGB(0x2C5FA8)],
                 background: [RGB(0x0B1020), RGB(0x161E3C)],
-                label: RGB(0xFFFFFF)
+                labels: Array(repeating: RGB(0xFFFFFF), count: 12)
             )
         case .aurora:
             return ThemeSpec(
                 accents: [RGB(0x0B7A5B), RGB(0x2B7A3F), RGB(0x557A0B), RGB(0x0E7490), RGB(0x0F766E), RGB(0x4D7C0F)],
                 background: [RGB(0x05201A), RGB(0x0A3328)],
-                label: RGB(0xFFFFFF)
+                labels: Array(repeating: RGB(0xFFFFFF), count: 12)
             )
         case .sunset:
             return ThemeSpec(
                 accents: [RGB(0xC92A2A), RGB(0xC2410C), RGB(0xA9346B), RGB(0x862E9C), RGB(0x364FC7), RGB(0x8F5B10)],
                 background: [RGB(0x1B0B14), RGB(0x321224)],
-                label: RGB(0xFFFFFF)
+                labels: Array(repeating: RGB(0xFFFFFF), count: 12)
             )
         }
     }

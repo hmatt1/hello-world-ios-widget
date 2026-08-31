@@ -13,8 +13,7 @@ public struct BoardPreset: Codable, Sendable, Identifiable, Equatable {
     public var paddingY: CGFloat
     public var cornerRadius: CGFloat
     public var outerCornerRadius: CGFloat
-    public var theme: Theme
-    public var customTheme: ThemeSpec?
+    public var themeId: UUID
     public var background: BackgroundStyle
 
     public init(
@@ -29,8 +28,7 @@ public struct BoardPreset: Codable, Sendable, Identifiable, Equatable {
         paddingY: CGFloat,
         cornerRadius: CGFloat,
         outerCornerRadius: CGFloat? = nil,
-        theme: Theme,
-        customTheme: ThemeSpec? = nil,
+        themeId: UUID,
         background: BackgroundStyle
     ) {
         self.id = id
@@ -44,13 +42,12 @@ public struct BoardPreset: Codable, Sendable, Identifiable, Equatable {
         self.paddingY = paddingY
         self.cornerRadius = cornerRadius
         self.outerCornerRadius = outerCornerRadius ?? cornerRadius
-        self.theme = theme
-        self.customTheme = customTheme
+        self.themeId = themeId
         self.background = background
     }
 
     enum CodingKeys: CodingKey {
-        case id, name, columns, marginX, marginY, spacingX, spacingY, paddingX, paddingY, cornerRadius, outerCornerRadius, theme, customTheme, background
+        case id, name, columns, marginX, marginY, spacingX, spacingY, paddingX, paddingY, cornerRadius, outerCornerRadius, themeId, theme, customTheme, background
     }
 
     public init(from decoder: Decoder) throws {
@@ -66,9 +63,18 @@ public struct BoardPreset: Codable, Sendable, Identifiable, Equatable {
         paddingY = try container.decode(CGFloat.self, forKey: .paddingY)
         cornerRadius = try container.decode(CGFloat.self, forKey: .cornerRadius)
         outerCornerRadius = try container.decodeIfPresent(CGFloat.self, forKey: .outerCornerRadius) ?? cornerRadius
-        theme = try container.decode(Theme.self, forKey: .theme)
-        customTheme = try container.decodeIfPresent(ThemeSpec.self, forKey: .customTheme)
         background = try container.decode(BackgroundStyle.self, forKey: .background)
+        
+        if let decodedThemeId = try container.decodeIfPresent(UUID.self, forKey: .themeId) {
+            themeId = decodedThemeId
+        } else if let oldTheme = try container.decodeIfPresent(Theme.self, forKey: .theme) {
+            // Migrate from old Theme enum
+            let defaultThemes = BoardThemeStore.createDefaultThemes()
+            let matched = defaultThemes.first(where: { $0.name == oldTheme.displayName })
+            themeId = matched?.id ?? defaultThemes.first!.id
+        } else {
+            themeId = BoardThemeStore.createDefaultThemes().first!.id
+        }
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -84,13 +90,12 @@ public struct BoardPreset: Codable, Sendable, Identifiable, Equatable {
         try container.encode(paddingY, forKey: .paddingY)
         try container.encode(cornerRadius, forKey: .cornerRadius)
         try container.encode(outerCornerRadius, forKey: .outerCornerRadius)
-        try container.encode(theme, forKey: .theme)
-        try container.encodeIfPresent(customTheme, forKey: .customTheme)
+        try container.encode(themeId, forKey: .themeId)
         try container.encode(background, forKey: .background)
     }
 
     public var activeSpec: ThemeSpec {
-        customTheme ?? theme.spec
+        BoardThemeStore.loadTheme(id: themeId).spec
     }
 
     public var layoutValues: BoardLayoutValues {
