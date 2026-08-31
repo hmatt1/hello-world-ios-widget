@@ -209,11 +209,11 @@ struct PresetEditorView: View {
                         ColorPicker("Background 2", selection: Binding(
                             get: { spec.background.count > 1 ? spec.background[1].color : spec.background.first?.color ?? .black },
                             set: { newValue in
-                                updateActiveTheme { spec in
+                                updateActiveTheme { spec, color in
                                     if spec.background.count < 2 {
                                         spec.background.append(RGB(red: 0, green: 0, blue: 0))
                                     }
-                                    spec.background[1].color = newValue
+                                    spec.background[1].color = color
                                 }(newValue)
                             }
                         ))
@@ -225,7 +225,7 @@ struct PresetEditorView: View {
                                     return spec.labels[index % spec.labels.count].color
                                 },
                                 set: { newValue in
-                                    updateActiveTheme { spec in
+                                    updateActiveTheme { spec, color in
                                         if spec.labels.isEmpty {
                                             spec.labels = Array(repeating: RGB(0xFFFFFF), count: 12)
                                         } else {
@@ -233,7 +233,7 @@ struct PresetEditorView: View {
                                                 spec.labels.append(spec.labels[spec.labels.count % spec.labels.count])
                                             }
                                         }
-                                        spec.labels[index].color = newValue
+                                        spec.labels[index].color = color
                                     }(newValue)
                                 }
                             ))
@@ -246,7 +246,7 @@ struct PresetEditorView: View {
                                     return spec.accents[index % spec.accents.count].color
                                 },
                                 set: { newValue in
-                                    updateActiveTheme { spec in
+                                    updateActiveTheme { spec, color in
                                         if spec.accents.isEmpty {
                                             let fallback = spec.labels.first ?? RGB(0xFFFFFF)
                                             spec.accents = Array(repeating: fallback, count: 12)
@@ -255,7 +255,7 @@ struct PresetEditorView: View {
                                                 spec.accents.append(spec.accents[spec.accents.count % spec.accents.count])
                                             }
                                         }
-                                        spec.accents[index].color = newValue
+                                        spec.accents[index].color = color
                                     }(newValue)
                                 }
                             ))
@@ -340,7 +340,7 @@ struct PresetEditorView: View {
             SlotFace(
                 name: names[index],
                 surface: preset.activeSpec.surface(at: index, accented: false),
-                label: preset.activeSpec.labelColor(accented: false),
+                label: preset.activeSpec.labelColor(at: index, accented: false),
                 mode: grid.mode,
                 font: grid.font,
                 paddingX: grid.layout.paddingX,

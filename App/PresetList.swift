@@ -18,7 +18,7 @@ struct PresetListView: View {
                                 Text(preset.name)
                                     .font(.headline)
                                     .foregroundColor(.primary)
-                                Text(preset.theme.rawValue.capitalized)
+                                Text(BoardThemeStore.loadTheme(id: preset.themeId).name)
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
