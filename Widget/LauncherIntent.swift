@@ -50,6 +50,15 @@ struct BoardPresetQuery: EntityQuery {
     
     func defaultResult() async -> BoardPresetEntity? {
         let presets = BoardPresetStore.loadRaw()
+        
+        let defaults = UserDefaults(suiteName: "group.com.hmatt1.launcherboard")
+        let lastId = defaults?.string(forKey: "lastEditedPresetId")
+        
+        if let lastId = lastId, let uuid = UUID(uuidString: lastId),
+           let preset = presets.first(where: { $0.id == uuid }) {
+            return BoardPresetEntity(id: preset.id, name: preset.name)
+        }
+        
         if let first = presets.first {
             return BoardPresetEntity(id: first.id, name: first.name)
         }
