@@ -20,8 +20,8 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Install xcodegen
-        run: brew install xcodegen
+      - name: Install dependencies
+        run: brew install xcodegen ldid
 
       - name: Generate Xcode Project
         run: xcodegen generate
@@ -45,7 +45,20 @@ jobs:
 
           mkdir Payload
           cp -R LauncherBoard.xcarchive/Products/Applications/LauncherBoard.app Payload/
+          
+          # Inject entitlements into the unsigned binaries
+          ldid -SApp/LauncherBoard.entitlements Payload/LauncherBoard.app/LauncherBoard
+          ldid -SWidget/LauncherBoardWidget.entitlements Payload/LauncherBoard.app/PlugIns/LauncherBoardWidget.appex/LauncherBoardWidget
+          
           zip -qr LauncherBoard.ipa Payload
+
+      - name: Verify injected entitlements
+        run: |
+          echo "==== Dumping App Entitlements ===="
+          ldid -e Payload/LauncherBoard.app/LauncherBoard
+          
+          echo "==== Dumping Widget Entitlements ===="
+          ldid -e Payload/LauncherBoard.app/PlugIns/LauncherBoardWidget.appex/LauncherBoardWidget
 
       - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
