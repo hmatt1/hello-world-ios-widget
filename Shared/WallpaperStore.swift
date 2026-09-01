@@ -6,7 +6,7 @@ import SwiftUI
 final class WallpaperStore: ObservableObject {
     static let shared = WallpaperStore()
     
-    private let defaults = UserDefaults(suiteName: "group.com.hmatt1.launcherboard")
+    private let defaults = AppGroup.defaults
     
     private let imageDataKey = "wallpaperImageData"
     private let screenWidthKey = "wallpaperScreenWidth"

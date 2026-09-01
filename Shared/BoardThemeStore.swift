@@ -6,7 +6,7 @@ import WidgetKit
 public class BoardThemeStore: ObservableObject {
     public static let shared = BoardThemeStore()
     
-    private let defaults = UserDefaults(suiteName: "group.com.hmatt1.launcherboard")
+    private let defaults = AppGroup.defaults
     private let key = "board_themes"
     
     @Published public private(set) var themes: [BoardTheme] = []
@@ -16,8 +16,8 @@ public class BoardThemeStore: ObservableObject {
     }
     
     public static nonisolated func loadRaw() -> [BoardTheme] {
-        let defaults = UserDefaults(suiteName: "group.com.hmatt1.launcherboard")
-        guard let data = defaults?.data(forKey: "board_themes"),
+        guard let defaults = AppGroup.defaults,
+              let data = defaults.data(forKey: "board_themes"),
               let loaded = try? JSONDecoder().decode([BoardTheme].self, from: data),
               !loaded.isEmpty else {
             return createDefaultThemes()

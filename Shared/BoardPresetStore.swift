@@ -27,7 +27,7 @@ extension DensityTemplate {
 public class BoardPresetStore: ObservableObject {
     public static let shared = BoardPresetStore()
     
-    private let defaults = UserDefaults(suiteName: "group.com.hmatt1.launcherboard")
+    private let defaults = AppGroup.defaults
     private let key = "board_presets"
     
     @Published public private(set) var presets: [BoardPreset] = []
@@ -37,8 +37,8 @@ public class BoardPresetStore: ObservableObject {
     }
     
     public static nonisolated func loadRaw() -> [BoardPreset] {
-        let defaults = UserDefaults(suiteName: "group.com.hmatt1.launcherboard")
-        guard let data = defaults?.data(forKey: "board_presets"),
+        guard let defaults = AppGroup.defaults,
+              let data = defaults.data(forKey: "board_presets"),
               let loaded = try? JSONDecoder().decode([BoardPreset].self, from: data),
               !loaded.isEmpty else {
             return createDefaultPresets()

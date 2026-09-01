@@ -2,8 +2,8 @@ import SwiftUI
 
 @main
 struct LauncherBoardApp: App {
-    @AppStorage("lastEditedPresetId", store: UserDefaults(suiteName: "group.com.hmatt1.launcherboard"))
-    var lastEditedPresetId: String = ""
+    @AppStorage("lastEditedPresetId", store: AppGroup.defaults)
+    private var lastEditedPresetId: String = ""
 
     var body: some Scene {
         WindowGroup {
