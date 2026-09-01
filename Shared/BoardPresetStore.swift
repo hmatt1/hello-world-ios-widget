@@ -1,4 +1,6 @@
 import Foundation
+import SwiftUI
+import WidgetKit
 
 public struct DensityTemplate: Identifiable, Hashable, Sendable {
     public let id: String
@@ -57,6 +59,7 @@ public class BoardPresetStore: ObservableObject {
     private func save() {
         if let encoded = try? JSONEncoder().encode(presets) {
             defaults?.set(encoded, forKey: key)
+            WidgetCenter.shared.reloadAllTimelines()
         }
     }
     

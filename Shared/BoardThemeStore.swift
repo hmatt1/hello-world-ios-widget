@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import WidgetKit
 
 @MainActor
 public class BoardThemeStore: ObservableObject {
@@ -32,6 +33,7 @@ public class BoardThemeStore: ObservableObject {
     private func save() {
         if let encoded = try? JSONEncoder().encode(themes) {
             defaults?.set(encoded, forKey: key)
+            WidgetCenter.shared.reloadAllTimelines()
         }
     }
     
