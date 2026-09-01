@@ -71,7 +71,4 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: |
-            LauncherBoard.ipa
-            App/LauncherBoard.entitlements
-            Widget/LauncherBoardWidget.entitlements
+          files: LauncherBoard.ipa
