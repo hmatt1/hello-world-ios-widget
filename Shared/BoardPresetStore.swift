@@ -64,11 +64,12 @@ public class BoardPresetStore: ObservableObject {
     }
     
     public static nonisolated func createDefaultPresets() -> [BoardPreset] {
-        return DensityTemplate.all.enumerated().map { index, template in
-            let stableId = UUID(uuidString: "00000000-0000-0000-0000-\(String(format: "%012x", index))")!
-            return BoardPreset(
+        let template = DensityTemplate.all.first { $0.id == "compact" } ?? DensityTemplate.all[0]
+        let stableId = UUID(uuidString: "00000000-0000-0000-0000-000000000000")!
+        return [
+            BoardPreset(
                 id: stableId,
-                name: template.name,
+                name: "Default Preset",
                 columns: template.layout.columns,
                 marginX: template.layout.marginX,
                 marginY: template.layout.marginY,
@@ -80,7 +81,7 @@ public class BoardPresetStore: ObservableObject {
                 themeId: BoardThemeStore.createDefaultThemes().first(where: { t in t.name == "Midnight" })!.id,
                 background: .theme
             )
-        }
+        ]
     }
     
     public func create(name: String) -> BoardPreset {
